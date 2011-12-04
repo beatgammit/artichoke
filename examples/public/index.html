@@ -1,0 +1,74 @@
+<html>
+<head>
+<title>Artichoke FTW</title>
+<link rel="stylesheet" type="text/css" href="css/style.css" />
+</head>
+<body>
+<div id='wrapper'>
+  <h1>Artichoke</h1>
+  <h2>About</h2>
+  <p>
+    Artichoke is a layered framework for creating other frameworks. It's just like connect for Nodejs, but for Go. This isn't meant for writing applications, but for writing frameworks for applications.
+  </p>
+
+  <h2>Middleware</h2>
+  <p>
+    Artichoke has the bare minimum to get you started. For now, this is the middleware bundled with Artichoke:
+  </p>
+
+  <ul>
+    <li>Static- static file handler</li>
+  </ul>
+
+  <p>
+  Look at the middleware in src/middleware for examples on how to build custom middleware.
+  </p>
+
+  <h2>Example</h2>
+  <p>
+    This is the code for this example:
+  </p>
+
+  <code>
+    <pre>
+package main
+
+import (
+	"artichoke"
+	"http"
+	"regexp"
+)
+
+func router(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
+	reg, _ := regexp.Compile("/greet/([A-Za-z0-9]*)/?([A-Za-z0-9]*)?")
+	if reg.MatchString(r.URL.Path) {
+		var s string
+		matches := reg.FindStringSubmatch(r.URL.Path);
+		for _, match := range(matches[1:]) {
+			s += " " + match
+		}
+		w.Write([]byte("Hello" + s))
+		w.Write([]byte(""))
+		return true
+	}
+
+	return false
+}
+
+func main() {
+	server := artichoke.New(nil, router, artichoke.Static("./public"))
+	server.RunLocal(3345)
+}
+    </pre>
+  </code>
+
+  <p>
+    <span>router</span> is a custom middleware, and the app uses the provided <span>Static</span> middleware to serve static files. If router middleware doesn't find a route, then it returns false, and <span>artichoke</span> continues down the stack. If route does find a match, then it returns true stop execution of the stack.
+  </p>
+
+  <p>
+    As you can see, the construction is quite simple. If this webapp was more complicated, then the problem could be broken down to a series of middleware to do most of the hard work (such as authentication, database queries, templating, etc).
+  </p>
+</div>
+</body>
+</html>
