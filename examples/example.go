@@ -17,12 +17,7 @@ func genRoutes() []artichoke.Route {
 	ret := []artichoke.Route{
 		artichoke.Route{
 			Method: "GET",
-			Pattern: "/greet/:first/:last",
-			Handler: handler,
-		},
-		artichoke.Route{
-			Method: "GET",
-			Pattern: "/greet/:first",
+			Pattern: "/greet/:first/?:last?",
 			Handler: handler,
 		},
 	}

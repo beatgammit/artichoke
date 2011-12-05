@@ -25,6 +25,23 @@
   Look at the middleware in src/middleware for examples on how to build custom middleware.
   </p>
 
+  <h3>Static</h3>
+  <p>
+    <span>Static</span> is a simple static file handler. It takes a single parameter, the path to the root directory to serve files from.
+  </p>
+
+  <h3>Router</h3>
+  <p>
+    <span>Router</span> is based on Sinatra for Ruby.
+  </p>
+
+  <p>
+    If something of the form of <span>:identifier</span> is present, it is interpreted as an identifier. Identifiers can be anything accepted by Go as an identifier. The last parameter passed to a Middleware will have a key "params", and a value for every identifier found.
+  </p>
+  <p>
+    If there is a <span>?</span> present, it treats the previous character or variable as optional. In the example code below, we have <span>/greet/:first/?:last?</span>. This will match any string starting with <span>/greet/</span>, followed by some URL segment, followed by an optional <span>/</span> and an optional URL segment. They will be assigned the names first and last respectively.
+  </p>
+
   <h2>Example</h2>
   <p>
     This is the code for this example:
@@ -51,12 +68,7 @@ func genRoutes() []artichoke.Route {
 	ret := []artichoke.Route{
 		artichoke.Route{
 			Method: "GET",
-			Pattern: "/greet/:first/:last",
-			Handler: handler,
-		},
-		artichoke.Route{
-			Method: "GET",
-			Pattern: "/greet/:first",
+			Pattern: "/greet/:first/?:last?",
 			Handler: handler,
 		},
 	}
@@ -79,7 +91,10 @@ func main() {
   </code>
 
   <p>
-    <span>logger</span> is a custom middleware, and the app uses the provided <span>Router</span> to route simple requests and <span>Static</span> middleware to serve static files. If router middleware doesn't find a route, then it returns false, and <span>artichoke</span> continues down the stack. If route does find a match, then it returns true stop execution of the stack. The custom <span>logger</span> always returns false, so it never ends the request, but it does log useful data to the console.
+    <span>logger</span> is a custom middleware. On each request, it simply logs the method and URL in the request and returns false to signify that it hasn't ended the response.
+  </p>
+  <p>
+    The app also uses two of the provided middleware, <span>Router</span> and <span>Static</span>. If router middleware doesn't find a route, then it returns false, and <span>artichoke</span> continues down the stack. If route does find a match, then it returns true stop execution of the stack. <span>Static</span> always ends the response, so it is at the end of the stack.
   </p>
 
   <p>

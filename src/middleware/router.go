@@ -11,7 +11,7 @@ const URLChars = "[A-Za-z$_.+!*'(),-]"
 
 // :identifier
 // this is a full Unicode-compliant regex
-var varRegex = regexp.MustCompile("/(:[\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}][\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nd}]+)")
+var varRegex = regexp.MustCompile("(:[\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}][\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nd}]*)")
 
 type Route struct {
 	// GET, POST, PUT, etc.
@@ -42,7 +42,7 @@ func Router(routes []Route) Middleware {
 			// get all of the variable names
 			vars := varRegex.FindAllString(pattern, -1)
 			for j, val := range vars {
-				vars[j] = val[2:]
+				vars[j] = val[1:]
 			}
 
 			routes[i].vars = vars
@@ -53,7 +53,10 @@ func Router(routes []Route) Middleware {
 			pattern = regexp.QuoteMeta(pattern)
 
 			// replace all variables in the pattern with a regex to match a part of a URL
-			pattern = varRegex.ReplaceAllString(pattern, "/(" + URLChars + "+)")
+			pattern = varRegex.ReplaceAllString(pattern, "(" + URLChars + "+)")
+
+			// allow optional parts of the string
+			pattern = strings.Replace(pattern, "\\?", "?", -1)
 
 			// store the generated regex into this Route object
 			// go ahead and panic; all panics will occur during debugging anyway
