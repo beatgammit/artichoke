@@ -66,3 +66,85 @@ This is what middleware looks like:
     func(http.ResponseWriter, *http.Request, map[string]interface{}) bool
 
 The last parameter is for arbitrary data passing. Middleware must define what keys they use and should provide a way to change the default for maximum flexibility. Examine the packaged middleware for examples on style.
+
+**BasicAuth**
+
+Performs basic HTTP authentication.
+
+    func BasicAuth(auth, required) Middleware
+
+* auth- map[string]string; maps a username to a password
+* required- bool; if true, sends a 401 and ends the response
+
+*BasicAuth* will make a new key in the Data parameter passed down the stack named *auth* of type map[string]interface{}. The keys of this map will be:
+
+* `user`- string; user name provided
+* `pass`- string; password provided
+* `authenticated`- bool; whether the user was successfully authenticated
+
+If no credentials were passed in, *auth* will be `nil`.
+
+**Router**
+
+Basic request router. Give it an array of routes and it will do the routing work for you.
+
+    func Router(routes) Middleware
+
+* routes- []Route; array of Route instances
+
+	type Route struct {
+		Method string
+		Pattern interface{}
+		Handler Middleware
+	}
+
+* Method- GET, POST, etc. or * to handle all request types
+* Pattern- string or regexp.Regexp; if it's a string, it will be parsed Sinatra style
+    * each :identifier maps to a position in the URL
+	* ? makes the previous character or group optional
+	* this gets parsed into a regexp.Regexp object
+* Handler- implementation of Middleware to handle the routed response
+    * if more than one pattern matches, they will be treated as individual middleware
+
+*Notes on Pattern:*
+
+Router creates a `params` key in the Data map that is passed down the stack. `params` has the form: `map[string]string`, with keys being identifiers, and values being the matches in the URL
+
+Examples:
+
+* `/:first/:second`
+    * '/hello/world'- matched
+        * first- hello
+        * second- world
+    * '/hello'- not matched
+    * '/hello/'- not matched
+    * '/'- not matched
+* `/:first/:second?`
+    * '/hello/world'- matched
+        * first- hello
+        * second- world
+    * '/hello'- not matched
+    * '/hello/'- matched
+        * first- hello
+    * '/'- not matched
+* `/:first/?:second?`
+    * '/hello/world'- matched
+        * first- hello
+        * second- world
+    * '/hello'- matched
+        * first- hello
+    * '/hello/'- matched
+        * first- hello
+    * '/'- not matched
+
+It's pretty simple. Be creative! For example, to match file extensions for a file named File (to dynamically respond to requests for different file formats):
+
+    /File.:extension?
+
+**Static**
+
+Simple static file handler that always ends the response.
+
+	func Static(root) Middleware
+
+* root- string; directory root from current directory

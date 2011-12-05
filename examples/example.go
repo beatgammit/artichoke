@@ -26,13 +26,30 @@ func genRoutes() []artichoke.Route {
 }
 
 func logger(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
-	fmt.Println("Method: " + r.Method)
-	fmt.Println("URL: " + r.URL.Raw)
-	fmt.Println("")
+	fmt.Println("Method:", r.Method)
+	fmt.Println("URL:", r.URL.Raw)
+
+	// auth can  be nil if no authentication data was passed in
+	if m["auth"] != nil {
+		auth := m["auth"].(map[string]interface{})
+
+		fmt.Println("User:", auth["user"].(string))
+		fmt.Println("Password:", auth["pass"].(string))
+		fmt.Println("Authenticated:", auth["authenticated"].(bool))
+	} else {
+		fmt.Println("No authentication data provided")
+	}
+
+	fmt.Println()
 	return false
 }
 
 func main() {
-	server := artichoke.New(nil, logger, artichoke.Router(genRoutes()), artichoke.Static("./public"))
+	server := artichoke.New(nil,
+			artichoke.BasicAuth(map[string]string{"jack": "johnson"}, false),
+			logger,
+			artichoke.Router(genRoutes()),
+			artichoke.Static("./public"),
+		)
 	server.RunLocal(3345)
 }
