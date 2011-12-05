@@ -2,27 +2,42 @@ package main
 
 import (
 	"artichoke"
-	"http"
-	"regexp"
+	"net/http"
+	"fmt"
 )
 
-func router(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
-	reg, _ := regexp.Compile("/greet/([A-Za-z0-9]*)/?([A-Za-z0-9]*)?")
-	if reg.MatchString(r.URL.Path) {
-		var s string
-		matches := reg.FindStringSubmatch(r.URL.Path);
-		for _, match := range(matches[1:]) {
-			s += " " + match
-		}
-		w.Write([]byte("Hello" + s))
-		w.Write([]byte(""))
-		return true
+func handler(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
+	params := m["params"].(map[string]string)
+	w.Write([]byte("Hello " + params["first"] + " " + params["last"]));
+	w.Write([]byte(""))
+	return true;
+}
+
+func genRoutes() []artichoke.Route {
+	ret := []artichoke.Route{
+		artichoke.Route{
+			Method: "GET",
+			Pattern: "/greet/:first/:last",
+			Handler: handler,
+		},
+		artichoke.Route{
+			Method: "GET",
+			Pattern: "/greet/:first",
+			Handler: handler,
+		},
 	}
 
+	return ret
+}
+
+func logger(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
+	fmt.Println("Method: " + r.Method)
+	fmt.Println("URL: " + r.URL.Raw)
+	fmt.Println("")
 	return false
 }
 
 func main() {
-	server := artichoke.New(nil, router, artichoke.Static("./public"))
+	server := artichoke.New(nil, logger, artichoke.Router(genRoutes()), artichoke.Static("./public"))
 	server.RunLocal(3345)
 }

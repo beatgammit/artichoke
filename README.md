@@ -5,6 +5,8 @@ Similar to Node's connect module, `artichoke` offers a layered approach to web a
 
 Everything is a node in a stack. Starting at the top of the stack (the first function passed in), each function is executed until one ends the response, and the rest of the functions are not executed. If the stack has been traversed and the response has not been ended, a default error handler will end it.
 
+**This project is currently being developed using the weekly builds of Go. This is to be considered highly unstable and the API may change drastically.**
+
 Philosophy
 ----------
 

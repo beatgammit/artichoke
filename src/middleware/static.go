@@ -1,12 +1,12 @@
 package artichoke
 
 import (
-	"http"
+	"net/http"
 )
 
 func Static(root string) Middleware {
-	return func (w http.ResponseWriter, r *http.Request, d Data) bool {
-		http.ServeFile(w, r, root + r.RawURL)
+	return func(w http.ResponseWriter, r *http.Request, d Data) bool {
+		http.ServeFile(w, r, root + r.URL.Raw)
 		return true
 	}
 }

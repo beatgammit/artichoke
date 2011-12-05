@@ -1,15 +1,14 @@
 package artichoke
 
 import (
-	"http"
-	"net"
 	"fmt"
+	"net"
+	"net/http"
 	"strconv"
-	"container/vector"
 )
 
-var errors = map[int] string {
-	http.StatusNotFound: fmt.Sprintf("<h1>Error %d: Not Found</h1><br /><br />The page or resource requested could not be found. If this was a link or worked previously, please notify your webmaster.", http.StatusNotFound),
+var errors = map[int]string{
+	http.StatusNotFound:            fmt.Sprintf("<h1>Error %d: Not Found</h1><br /><br />The page or resource requested could not be found. If this was a link or worked previously, please notify your webmaster.", http.StatusNotFound),
 	http.StatusInternalServerError: fmt.Sprintf("<h1>Error %d: Internal Server Error</h1><br /><br />An internal server error prevented execution of this request. Please notify the webmaster.", http.StatusInternalServerError),
 }
 
@@ -22,9 +21,9 @@ type Data map[string]interface{}
 type Middleware func(http.ResponseWriter, *http.Request, Data) bool
 
 type Server struct {
-	handler func (http.ResponseWriter, *http.Request)
-	middleware vector.Vector // allows middleware to be added after the New
-	l net.Listener
+	handler    func(http.ResponseWriter, *http.Request)
+	middleware []Middleware
+	l          net.Listener
 }
 
 var server Server
@@ -43,15 +42,12 @@ func New(options map[string]interface{}, fns ...Middleware) *Server {
 // fns is any number of functions that act as middleware
 // they will be called order on every request
 func (s *Server) Use(fns ...Middleware) {
-	for _, fn := range fns {
-		s.middleware.Push(fn)
-	}
+	s.middleware = append(s.middleware, fns...)
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var data Data
-	for i := 0; i < s.middleware.Len(); i++ {
-		fn := s.middleware.At(i).(Middleware)
+	data := make(Data)
+	for _, fn := range(s.middleware) {
 		if fn(w, r, data) == true {
 			return
 		}
@@ -60,14 +56,14 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	status := http.StatusNotFound
 	fmt.Println("No handler for this request:")
 	fmt.Printf("  Method: %s\n", r.Method)
-	fmt.Printf("  URL: %s\n", r.RawURL)
+	fmt.Printf("  URL: %s\n", r.URL.Raw)
 	fmt.Println("  Headers:")
-	for k, v := range(r.Header) {
+	for k, v := range r.Header {
 		fmt.Printf("    %s: %s\n", k, v)
 	}
 	fmt.Println("")
 
-	resp := errors[status];
+	resp := errors[status]
 	w.Header().Add("Content-Type", "text/html")
 	w.Header().Add("Content-Length", strconv.Itoa(len(resp)))
 	w.WriteHeader(status)
@@ -85,9 +81,9 @@ func (s *Server) Run(port int, host string) {
 	mux := http.NewServeMux()
 	mux.Handle("/", s)
 
-	l, err := net.Listen("tcp", host + ":" + strconv.Itoa(port))
+	l, err := net.Listen("tcp", host+":"+strconv.Itoa(port))
 	if err != nil {
-		fmt.Println(err.String())
+		fmt.Println(err)
 	}
 	s.l = l
 
