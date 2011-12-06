@@ -148,3 +148,11 @@ Simple static file handler that always ends the response.
 	func Static(root) Middleware
 
 * root- string; directory root from current directory
+
+**QueryParser**
+
+Uses the built-in url.URL.Query() and populates a `query` key in the Data map that is passed down the stack with a url.Values object as the value (basically a map[string][]string).
+
+	func QueryParser() Middleware
+
+There are no parameters, because it's super simple.

@@ -3,6 +3,7 @@ package main
 import (
 	"artichoke"
 	"net/http"
+	"net/url"
 	"fmt"
 )
 
@@ -40,6 +41,13 @@ func logger(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
 		fmt.Println("No authentication data provided")
 	}
 
+	fmt.Println("Query:")
+	for k, vals := range m["query"].(url.Values) {
+		for _, v := range vals {
+			fmt.Println("  " + k + " : " + v)
+		}
+	}
+
 	fmt.Println()
 	return false
 }
@@ -47,6 +55,7 @@ func logger(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
 func main() {
 	server := artichoke.New(nil,
 			artichoke.BasicAuth(map[string]string{"jack": "johnson"}, false),
+			artichoke.QueryParser(),
 			logger,
 			artichoke.Router(genRoutes()),
 			artichoke.Static("./public"),

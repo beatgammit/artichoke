@@ -56,6 +56,11 @@
     <span>Static</span> is a simple static file handler. It takes a single parameter, the path to the root directory to serve files from.
   </p>
 
+  <h3>QueryParser</h3>
+  <p>
+    <span>QueryParser</span> is a very simple query parser. It just uses the built-in query-parser provided with Go and populates the Data parameter with a <span>query</span> parameter, which is a url.Values object (basically a map[string][]string).
+  </p>
+
   <h2>Example</h2>
   <p>
     This is the code for this example:
@@ -68,6 +73,7 @@ package main
 import (
 	"artichoke"
 	"net/http"
+	"net/url"
 	"fmt"
 )
 
@@ -105,6 +111,13 @@ func logger(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
 		fmt.Println("No authentication data provided")
 	}
 
+	fmt.Println("Query:")
+	for k, vals := range m["query"].(url.Values) {
+		for _, v := range vals {
+			fmt.Println("  " + k + " : " + v)
+		}
+	}
+
 	fmt.Println()
 	return false
 }
@@ -112,6 +125,7 @@ func logger(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
 func main() {
 	server := artichoke.New(nil,
 			artichoke.BasicAuth(map[string]string{"jack": "johnson"}, false),
+			artichoke.QueryParser(),
 			logger,
 			artichoke.Router(genRoutes()),
 			artichoke.Static("./public"),
@@ -123,9 +137,6 @@ func main() {
 
   <p>
     <span>logger</span> is a custom middleware. On each request, it simply logs the method and URL in the request and returns false to signify that it hasn't ended the response.
-  </p>
-  <p>
-    The app also uses two of the provided middleware, <span>BasicAuth</span>, <span>Router</span> and <span>Static</span>. Because <span>BasicAuth</span> was passed <span>false</span>, it won't respond to the request, and it will only pass the user's athentication data down the stack. If router middleware doesn't find a route, then it returns false, and <span>artichoke</span> continues down the stack. If route does find a match, then it returns true stop execution of the stack. <span>Static</span> always ends the response, so it is at the end of the stack.
   </p>
 
   <p>

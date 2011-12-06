@@ -6,6 +6,7 @@ GOFILES=\
 	src/middleware/static.go\
 	src/middleware/router.go\
 	src/middleware/basic-auth.go\
+	src/middleware/query-parser.go\
 
 # makes a package
 include $(GOROOT)/src/Make.pkg
