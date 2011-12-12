@@ -18,6 +18,14 @@
 
   <ul>
     <li>BasicAuth- basic http authentication</li>
+	<li>Bodyparser- handles the following content-types:
+	  <ul>
+        <li><span>application/json</span>- json-encoded</li>
+        <li><span>application/x-www-form-encoded</span>- uses built-in form handling</li>
+        <li><span>multipart/form-data</span>- uses built-in multipart handling</li>
+      </ul>
+    </li>
+	<li>QueryParser- basic query parser</li>
     <li>Router- simple resource router</li>
     <li>Static- static file handler</li>
   </ul>
@@ -59,6 +67,14 @@
   <h3>QueryParser</h3>
   <p>
     <span>QueryParser</span> is a very simple query parser. It just uses the built-in query-parser provided with Go and populates the Data parameter with a <span>query</span> parameter, which is a url.Values object (basically a map[string][]string).
+  </p>
+
+  <h3>BodyParser</h3>
+  <p>
+    <span>BodyParser</span> is a simple body parser. If the request has the content-type "application/json", then the body is parsed as JSON and populates the Data parameter with a <span>bodyJson</span> parameter, which is the result of json.Unmarshal. If the request has the content-type "application/x-www-form-encoded", then the body is parsed as a url-encoded form using http.Request.ParseForm(). If the content-type is "multipart/form-data", the request is parsed using http.Request.ParseMultipartForm(). If the content-type is none of the afore-mentioned, then the body is read as a string and the Data parameter is populated with a <span>body</span> parameter (also true for "application/json" requests).
+  </p>
+  <p>
+    Only POST and PUT requests are parsed as described.
   </p>
 
   <h2>Example</h2>
@@ -118,6 +134,11 @@ func logger(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
 		}
 	}
 
+	if m["body"] != nil {
+		fmt.Println("Body:")
+		fmt.Println("  " + m["body"].(string))
+	}
+
 	fmt.Println()
 	return false
 }
@@ -126,6 +147,7 @@ func main() {
 	server := artichoke.New(nil,
 			artichoke.BasicAuth(map[string]string{"jack": "johnson"}, false),
 			artichoke.QueryParser(),
+			artichoke.BodyParser(1024 * 10),
 			logger,
 			artichoke.Router(genRoutes()),
 			artichoke.Static("./public"),

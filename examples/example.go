@@ -48,6 +48,11 @@ func logger(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
 		}
 	}
 
+	if m["body"] != nil {
+		fmt.Println("Body:")
+		fmt.Println("  " + m["body"].(string))
+	}
+
 	fmt.Println()
 	return false
 }
@@ -56,6 +61,7 @@ func main() {
 	server := artichoke.New(nil,
 			artichoke.BasicAuth(map[string]string{"jack": "johnson"}, false),
 			artichoke.QueryParser(),
+			artichoke.BodyParser(1024 * 10),
 			logger,
 			artichoke.Router(genRoutes()),
 			artichoke.Static("./public"),
