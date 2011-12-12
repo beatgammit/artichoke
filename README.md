@@ -52,11 +52,14 @@ Add middleware. Middleware will be called in the order received. For more inform
 
 Runs the server on the specified port and host.
 
-> func RunLocal(port)
+> func RunTLS(port, host, certFile, keyFile)
 
 * port- int
+* host- string
+* certFile- string; path to TLS certificate
+* keyFile- string; path to private key
 
-Convenience for running a server on localhost.
+Runs the server on the specified port and host using the certificate and private key for TLS sessions.
 
 Middleware
 ----------

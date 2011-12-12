@@ -24,6 +24,9 @@ type Server struct {
 	handler    func(http.ResponseWriter, *http.Request)
 	middleware []Middleware
 	l          net.Listener
+	// for TLS connections
+	certFile   string
+	keyFile   string
 }
 
 var server Server
@@ -78,11 +81,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) Run(port int, host string) {
-	fmt.Println("Starting server on port:", port)
+	fmt.Println("Server starting on port:", port)
+
 	http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), s)
 }
 
-func (s *Server) RunLocal(port int) {
-	// keep handling in the same function
-	s.Run(port, "localhost")
+func (s *Server) RunTLS(port int, host string, certFile string, keyFile string) {
+	fmt.Println("Secure server starting on port:", port)
+
+	http.ListenAndServeTLS(fmt.Sprintf("%s:%d", host, port), certFile, keyFile, s)
 }

@@ -66,5 +66,5 @@ func main() {
 			artichoke.Router(genRoutes()),
 			artichoke.Static("./public"),
 		)
-	server.RunLocal(3345)
+	server.Run(3345, "localhost")
 }
