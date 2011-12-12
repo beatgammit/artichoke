@@ -84,6 +84,24 @@ Performs basic HTTP authentication.
 
 If no credentials were passed in, *auth* will be `nil`.
 
+**BodyParser**
+
+Attempts to parse the body as defined by the content-type.
+
+    func BodyParser(maxMemory) Middleware
+
+* maxMemory- int64; maximum memory, in bytes, the request can use for caching (for multipart)
+  * Once the max memory has been used, files will be written to the filesystem
+
+*BodyParser* will make an attempt to decode the request body depending on the content type. For example:
+
+* `application/json`- parses body as JSON and stores result in Data["bodyJson"] and the raw text in Data["body"]
+* `application/x-www-form-encoded`- uses the built-in r.ParseForm(); result is stored in r.Form
+* `multipart/form-data`- uses the built-in r.ParseMultipartForm; result is stored in r.Form
+* default- full-text of the body is stored in Data["body"]
+
+If an error occurs, the error is stored in d["bodyParseError"]. This will be of type os.Error.
+
 **Router**
 
 Basic request router. Give it an array of routes and it will do the routing work for you.

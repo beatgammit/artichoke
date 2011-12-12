@@ -78,19 +78,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) Run(port int, host string) {
-	mux := http.NewServeMux()
-	mux.Handle("/", s)
-
-	l, err := net.Listen("tcp", host+":"+strconv.Itoa(port))
-	if err != nil {
-		fmt.Println(err)
-	}
-	s.l = l
-
-	fmt.Println("Starting server on port: " + strconv.Itoa(port))
-	http.Serve(s.l, mux)
+	fmt.Println("Starting server on port:", port)
+	http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), s)
 }
 
 func (s *Server) RunLocal(port int) {
+	// keep handling in the same function
 	s.Run(port, "localhost")
 }
