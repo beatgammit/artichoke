@@ -7,7 +7,7 @@ import (
 )
 
 // Unicode isn't supported yet in all browsers, so we'll take the least common denominator
-const URLChars = "[A-Za-z$_.+!*'(),-]"
+const URLChars = "[A-Za-z0-9$_.+!*'\"(),-]"
 
 // :identifier
 // this is a full Unicode-compliant regex

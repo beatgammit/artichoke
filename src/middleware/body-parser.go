@@ -7,52 +7,10 @@ import (
 	"fmt"
 )
 
-/*
-func printJson(j interface{}) string {
-	switch j.(type) {
-		case bool:
-			return strconv.FormatBool(j.(bool))
-
-		case float64:
-			return strconv.FormatFloat(j.(float64), 'g', -1, 64)
-
-		case string:
-			return "\"" + j.(string) + "\""
-
-		case []interface{}:
-			t := j.([]interface{})
-			s := make([]string, len(t))
-
-			for i, val := range t {
-				s[i + 1] = printJson(val)
-			}
-
-			return fmt.Sprintf("[%s]", strings.Join(s, ","))
-
-		case map[string]interface{}:
-			m := j.(map[string]interface{})
-			s := make([]string, len(m))
-
-			i := 0
-			for k, v := range m {
-				s[i] = fmt.Sprintf("\"%s\":%s", k, printJson(v))
-				i += 1
-			}
-
-			return fmt.Sprintf("{%s}", strings.Join(s, ","))
-
-		case nil:
-			return "null"
-	}
-
-	return ""
-}
-*/
-
 func BodyParser(maxMemory int64) Middleware {
 	return func(w http.ResponseWriter, r *http.Request, d Data) bool {
-		// ignore GET and HEAD requests
-		if r.Method == "GET" || r.Method == "HEAD" {
+		// ignore GET and HEAD requests, they don't have useful data
+		if r.Method != "PUT" && r.Method != "POST" {
 			return false
 		}
 
@@ -70,9 +28,10 @@ func BodyParser(maxMemory int64) Middleware {
 				if err != nil {
 					fmt.Println("Error parsing JSON: " + err.Error())
 					d["bodyParseError"] = err
+				} else {
+					d["bodyJson"] = body
 				}
 
-				d["bodyJson"] = body
 				d["body"] = string(s)
 
 			case "multipart/form-data":
