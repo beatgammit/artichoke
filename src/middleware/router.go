@@ -80,7 +80,7 @@ func Router(routes []Route) Middleware {
 			reg := v.Pattern.(*regexp.Regexp)
 
 			// check if there's a match
-			matches := reg.FindAllStringSubmatch(r.URL.Raw, -1)
+			matches := reg.FindAllStringSubmatch(r.URL.Path, -1)
 			if matches == nil {
 				continue
 			}

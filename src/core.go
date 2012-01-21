@@ -59,7 +59,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	status := http.StatusNotFound
 	fmt.Println("No handler for this request:")
 	fmt.Printf("  Method: %s\n", r.Method)
-	fmt.Printf("  URL: %s\n", r.URL.Raw)
+	fmt.Printf("  URL: %s\n", r.URL.Path)
 	fmt.Println("  Headers:")
 	for k, v := range r.Header {
 		fmt.Printf("    %s: %s\n", k, v)

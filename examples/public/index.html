@@ -114,7 +114,7 @@ func genRoutes() []artichoke.Route {
 
 func logger(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
 	fmt.Println("Method:", r.Method)
-	fmt.Println("URL:", r.URL.Raw)
+	fmt.Println("URL:", r.URL.Path)
 
 	// auth can  be nil if no authentication data was passed in
 	if m["auth"] != nil {
