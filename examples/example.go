@@ -1,7 +1,7 @@
 package main
 
 import (
-	"artichoke"
+	"../"
 	"net/http"
 	"net/url"
 	"fmt"
