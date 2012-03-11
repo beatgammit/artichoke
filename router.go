@@ -22,6 +22,9 @@ type Route struct {
 	// variable names by position in regexp match
 	// this will be not be nil only if Pattern has at least one variable
 	vars []string
+
+	// the regex from the user or the Regexp generated
+	reg *regexp.Regexp
 }
 
 func Router(routes []Route) Middleware {
@@ -60,9 +63,9 @@ func Router(routes []Route) Middleware {
 
 			// store the generated regex into this Route object
 			// go ahead and panic; all panics will occur during debugging anyway
-			routes[i].Pattern = regexp.MustCompile(pattern)
+			routes[i].reg = regexp.MustCompile(pattern)
 		case regexp.Regexp:
-			routes[i].Pattern = &t
+			routes[i].reg = &t
 		default:
 			if _, ok := v.Pattern.(*regexp.Regexp); ok {
 				panic("Pattern is not a string or a regexp!")
@@ -77,10 +80,8 @@ func Router(routes []Route) Middleware {
 				continue
 			}
 
-			reg := v.Pattern.(*regexp.Regexp)
-
 			// check if there's a match
-			matches := reg.FindAllStringSubmatch(r.URL.Path, -1)
+			matches := v.reg.FindAllStringSubmatch(r.URL.Path, -1)
 			if matches == nil {
 				continue
 			}
