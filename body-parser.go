@@ -7,8 +7,31 @@ import (
 	"fmt"
 )
 
+type Body struct {
+	Data interface{}
+	Raw []byte
+	Err error
+}
+
+func NewBody(d interface{}, r []byte, e error) *Body {
+	body := new(Body)
+	body.Data = d
+	body.Raw = r
+	body.Err = e
+
+	return body
+}
+
+func (d *Data) GetBody() *Body {
+	if b, ok := d.raw["body"]; ok {
+		return b.(*Body)
+	}
+
+	return nil
+}
+
 func BodyParser(maxMemory int64) Middleware {
-	return func(w http.ResponseWriter, r *http.Request, d Data) bool {
+	return func(w http.ResponseWriter, r *http.Request, d *Data) bool {
 		// ignore GET and HEAD requests, they don't have useful data
 		if r.Method != "PUT" && r.Method != "POST" {
 			return false
@@ -27,26 +50,23 @@ func BodyParser(maxMemory int64) Middleware {
 				err = json.Unmarshal(s, &body)
 				if err != nil {
 					fmt.Println("Error parsing JSON: " + err.Error())
-					d["bodyParseError"] = err
-				} else {
-					d["bodyJson"] = body
 				}
 
-				d["body"] = string(s)
+				d.raw["body"] = NewBody(body, s, err)
 
 			case "multipart/form-data":
 				err := r.ParseMultipartForm(maxMemory)
 				if err != nil {
 					fmt.Println("Error parsing body as multi-part form: " + err.Error())
-					d["bodyParseError"] = err
 				}
+				d.raw["body"] = NewBody("", nil, err)
 
 			case "application/x-www-form-encoded":
 				err := r.ParseForm()
 				if err != nil {
 					fmt.Println("Error parsing body as form")
-					d["bodyParseError"] = err
 				}
+				d.raw["body"] = NewBody("", nil, err)
 
 			// treat as default handler
 			case "text/plain":
@@ -59,7 +79,7 @@ func BodyParser(maxMemory int64) Middleware {
 					return false
 				}
 
-				d["body"] = string(s)
+				d.raw["body"] = NewBody(string(s), s, err)
 		}
 		return false
 	}

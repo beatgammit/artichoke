@@ -3,13 +3,12 @@ package main
 import (
 	"../"
 	"net/http"
-	"net/url"
 	"fmt"
 )
 
-func handler(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
-	params := m["params"].(map[string]string)
-	w.Write([]byte("Hello " + params["first"] + " " + params["last"]));
+func handler(w http.ResponseWriter, r *http.Request, m *artichoke.Data) bool {
+	params := m.GetParams()
+	w.Write([]byte("Hello " + params.Get("first") + " " + params.Get("last")));
 	w.Write([]byte(""))
 	return true;
 }
@@ -26,31 +25,29 @@ func genRoutes() []artichoke.Route {
 	return ret
 }
 
-func logger(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
+func logger(w http.ResponseWriter, r *http.Request, m *artichoke.Data) bool {
 	fmt.Println("Method:", r.Method)
 	fmt.Println("URL:", r.URL.Path)
 
 	// auth can  be nil if no authentication data was passed in
-	if m["auth"] != nil {
-		auth := m["auth"].(map[string]interface{})
-
-		fmt.Println("User:", auth["user"].(string))
-		fmt.Println("Password:", auth["pass"].(string))
-		fmt.Println("Authenticated:", auth["authenticated"].(bool))
+	if auth := m.GetAuth(); auth != nil {
+		fmt.Println("User:", auth.User)
+		fmt.Println("Password:", auth.Pass)
+		fmt.Println("Authenticated:", auth.Authenticated)
 	} else {
 		fmt.Println("No authentication data provided")
 	}
 
 	fmt.Println("Query:")
-	for k, vals := range m["query"].(url.Values) {
+	for k, vals := range m.GetQuery() {
 		for _, v := range vals {
 			fmt.Println("  " + k + " : " + v)
 		}
 	}
 
-	if m["body"] != nil {
+	if body := m.GetBody(); body != nil {
 		fmt.Println("Body:")
-		fmt.Println("  " + m["body"].(string))
+		fmt.Println("  " + string(body.Raw))
 	}
 
 	fmt.Println()

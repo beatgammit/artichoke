@@ -27,6 +27,28 @@ type Route struct {
 	reg *regexp.Regexp
 }
 
+type Params struct {
+	raw map[string]string
+}
+
+func NewParams(raw map[string]string) *Params {
+	p := new(Params)
+	p.raw = raw
+
+	return p
+}
+
+func (p *Params) Get(key string) string {
+	return p.raw[key]
+}
+
+func (d *Data) GetParams() *Params {
+	if p, ok := d.raw["params"]; ok {
+		return p.(*Params)
+	}
+	return nil
+}
+
 func Router(routes []Route) Middleware {
 	for i, v := range routes {
 		if v.Handler == nil {
@@ -73,7 +95,7 @@ func Router(routes []Route) Middleware {
 		}
 	}
 
-	return func(w http.ResponseWriter, r *http.Request, d Data) bool {
+	return func(w http.ResponseWriter, r *http.Request, d *Data) bool {
 		for _, v := range routes {
 			// use Contains because v.Method could have comma-separated methods
 			if !strings.Contains(v.Method, r.Method) && v.Method != "*" {
@@ -96,7 +118,7 @@ func Router(routes []Route) Middleware {
 				}
 			}
 
-			d["params"] = params
+			d.raw["params"] = NewParams(params)
 			if res := v.Handler(w, r, d); res {
 				return true
 			}

@@ -7,8 +7,45 @@ import (
 	"strings"
 )
 
+type Auth struct {
+	User string
+	Pass string
+	Authenticated bool
+}
+
+func NewAuth(u string, p string, a bool) *Auth {
+	auth := new(Auth)
+	auth.User = u
+	auth.Pass = p
+	auth.Authenticated = a
+
+	return auth
+}
+
+type AuthError struct {
+	err string
+}
+
+func NewError(msg string) *AuthError {
+	e := new(AuthError)
+	e.err = msg
+	return e
+}
+
+func (e* AuthError) String() string {
+	return e.err
+}
+
+func (d* Data) GetAuth() *Auth {
+	if a, ok := d.raw["auth"]; ok {
+		return a.(*Auth)
+	}
+
+	return nil
+}
+
 func BasicAuth(auth map[string]string, required bool) Middleware {
-	return func (w http.ResponseWriter, r *http.Request, m Data) bool {
+	return func (w http.ResponseWriter, r *http.Request, m *Data) bool {
 		buf := bytes.Buffer{}
 		str := r.Header.Get("authorization")
 
@@ -38,11 +75,7 @@ func BasicAuth(auth map[string]string, required bool) Middleware {
 		pass := cAuth[1]
 
 		success := auth[user] == pass
-		m["auth"] = map[string]interface{} {
-			"user": user,
-			"pass": pass,
-			"authenticated": success,
-		}
+		m.raw["auth"] = NewAuth(user, pass, success)
 
 		if success {
 			if required {

@@ -35,6 +35,10 @@
   </ul>
 
   <p>
+    Each middleware that parses some kind of input will attach a function to the Data parameter (the last parameter), such as <span>GetBody()</span> or <span>GetQuery()</span>. Internally, this data is stored in a <span>map[string]interface{}</span>, so make sure not to trample on someone else's toes when writing Middleware.
+  </p>
+
+  <p>
   Look at the middleware in src/middleware for examples on how to build custom middleware.
   </p>
 
@@ -43,11 +47,11 @@
     <span>BasicAuth</span> is a very simple HTTP authentication module. Pass in a map that maps users to passwords and BasicAuth will decode and check passwords against it on each request. HTTP authentication is not secure, so it should only be used in testing or for trivial applications.
   </p>
   <p>
-    <span>BasicAuth</span> creates an <span>auth</span> key on the data parameter, which is a <span>map[string]interface{}</span>. The available values are:
+    <span>BasicAuth</span> attaches a <span>GetAuth()</span> function to the Data parameter, which will return a struct with three properties:
       <ul>
-        <li><span>user</span>- supplied user name; string</li>
-        <li><span>pass</span>- supplied password; string</li>
-        <li><span>authenticated</span>- whether the user/pass combination was accepted; bool</li>
+        <li><span>User</span>- supplied user name; string</li>
+        <li><span>Pass</span>- supplied password; string</li>
+        <li><span>Authenticated</span>- whether the user/pass combination was accepted; bool</li>
       </ul>
   </p>
 
@@ -57,7 +61,7 @@
   </p>
 
   <p>
-    If something of the form of <span>:identifier</span> is present, it is interpreted as an identifier. Identifiers can be anything accepted by Go as an identifier. The last parameter passed to a Middleware will have a key "params", and a value for every identifier found.
+    If something of the form of <span>:identifier</span> is present, it is interpreted as an identifier. Identifiers can be anything accepted by Go as an identifier. The Data parameter will have a <span>GetParams()</span> function, which will return a struct with a <span>Get(key string)</span> function to get a parameter's value by name.
   </p>
   <p>
     If there is a <span>?</span> present, it treats the previous character or variable as optional. In the example code below, we have <span>/greet/:first/?:last?</span>. This will match any string starting with <span>/greet/</span>, followed by some URL segment, followed by an optional <span>/</span> and an optional URL segment. They will be assigned the names first and last respectively.
@@ -70,12 +74,12 @@
 
   <h3>QueryParser</h3>
   <p>
-    <span>QueryParser</span> is a very simple query parser. It just uses the built-in query-parser provided with Go and populates the Data parameter with a <span>query</span> parameter, which is a url.Values object (basically a map[string][]string).
+    <span>QueryParser</span> is a very simple query parser. It just uses the built-in query-parser provided with Go and attaches a <span>GetQuery()</span> function that returns a <span>url.Values</span> instance (basically a map[string][]string).
   </p>
 
   <h3>BodyParser</h3>
   <p>
-    <span>BodyParser</span> is a simple body parser. If the request has the content-type "application/json", then the body is parsed as JSON and populates the Data parameter with a <span>bodyJson</span> parameter, which is the result of json.Unmarshal. If the request has the content-type "application/x-www-form-encoded", then the body is parsed as a url-encoded form using http.Request.ParseForm(). If the content-type is "multipart/form-data", the request is parsed using http.Request.ParseMultipartForm(). If the content-type is none of the afore-mentioned, then the body is read as a string and the Data parameter is populated with a <span>body</span> parameter (also true for "application/json" requests).
+    <span>BodyParser</span> is a simple body parser. All requests create a Body struct accessible through <span>GetBody()</span>. If the request has the content-type "application/json", then Body.Json is populated, which is the result of json.Unmarshal. If the request has the content-type "application/x-www-form-encoded", then the body is parsed as a url-encoded form using http.Request.ParseForm(). If the content-type is "multipart/form-data", the request is parsed using http.Request.ParseMultipartForm(). If the content-type is none of the afore-mentioned, then the body is read as a string and the Data parameter is populated with a <span>body</span> parameter (also true for "application/json" requests).
   </p>
   <p>
     Only POST and PUT requests are parsed as described.
@@ -91,73 +95,71 @@
 package main
 
 import (
-    "artichoke"
-    "net/http"
-    "net/url"
-    "fmt"
+	"../"
+	"net/http"
+	"fmt"
 )
 
-func handler(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
-    params := m["params"].(map[string]string)
-    w.Write([]byte("Hello " + params["first"] + " " + params["last"]));
-    w.Write([]byte(""))
-    return true;
+func handler(w http.ResponseWriter, r *http.Request, m *artichoke.Data) bool {
+	params := m.GetParams()
+	w.Write([]byte("Hello " + params.Get("first") + " " + params.Get("last")));
+	w.Write([]byte(""))
+	return true;
 }
 
 func genRoutes() []artichoke.Route {
-    ret := []artichoke.Route{
-        artichoke.Route{
-            Method: "GET",
-            Pattern: "/greet/:first/?:last?",
-            Handler: handler,
-        },
-    }
+	ret := []artichoke.Route{
+		artichoke.Route{
+			Method: "GET",
+			Pattern: "/greet/:first/?:last?",
+			Handler: handler,
+		},
+	}
 
-    return ret
+	return ret
 }
 
-func logger(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
-    fmt.Println("Method:", r.Method)
-    fmt.Println("URL:", r.URL.Path)
+func logger(w http.ResponseWriter, r *http.Request, m *artichoke.Data) bool {
+	fmt.Println("Method:", r.Method)
+	fmt.Println("URL:", r.URL.Path)
 
-    // auth can  be nil if no authentication data was passed in
-    if m["auth"] != nil {
-        auth := m["auth"].(map[string]interface{})
+	// auth can  be nil if no authentication data was passed in
+	if auth := m.GetAuth(); auth != nil {
+		fmt.Println("User:", auth.User)
+		fmt.Println("Password:", auth.Pass)
+		fmt.Println("Authenticated:", auth.Authenticated)
+	} else {
+		fmt.Println("No authentication data provided")
+	}
 
-        fmt.Println("User:", auth["user"].(string))
-        fmt.Println("Password:", auth["pass"].(string))
-        fmt.Println("Authenticated:", auth["authenticated"].(bool))
-    } else {
-        fmt.Println("No authentication data provided")
-    }
+	fmt.Println("Query:")
+	for k, vals := range m.GetQuery() {
+		for _, v := range vals {
+			fmt.Println("  " + k + " : " + v)
+		}
+	}
 
-    fmt.Println("Query:")
-    for k, vals := range m["query"].(url.Values) {
-        for _, v := range vals {
-            fmt.Println("  " + k + " : " + v)
-        }
-    }
+	if body := m.GetBody(); body != nil {
+		fmt.Println("Body:")
+		fmt.Println("  " + string(body.Raw))
+	}
 
-    if m["body"] != nil {
-        fmt.Println("Body:")
-        fmt.Println("  " + m["body"].(string))
-    }
-
-    fmt.Println()
-    return false
+	fmt.Println()
+	return false
 }
 
 func main() {
-    server := artichoke.New(nil,
-            artichoke.BasicAuth(map[string]string{"jack": "johnson"}, false),
-            artichoke.QueryParser(),
-            artichoke.BodyParser(1024 * 10),
-            logger,
-            artichoke.Router(genRoutes()),
-            artichoke.Static("./public"),
-        )
-    server.Run(3345, "localhost")
-}</pre>
+	server := artichoke.New(nil,
+			artichoke.BasicAuth(map[string]string{"jack": "johnson"}, false),
+			artichoke.QueryParser(),
+			artichoke.BodyParser(1024 * 10),
+			logger,
+			artichoke.Router(genRoutes()),
+			artichoke.Static("./public"),
+		)
+	server.Run(3345, "localhost")
+}
+</pre>
   </code>
 
   <p>
