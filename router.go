@@ -6,12 +6,9 @@ import (
 	"strings"
 )
 
-// Unicode isn't supported yet in all browsers, so we'll take the least common denominator
-const URLChars = "[A-Za-z0-9$_.+!*'\"(),-]"
-
 // :identifier
 // this is a full Unicode-compliant regex
-var varRegex = regexp.MustCompile("(:[\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}][\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nd}]*)")
+var varRegex = regexp.MustCompile(":([\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}][\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nd}]*)")
 
 type Route struct {
 	// GET, POST, PUT, etc.
@@ -64,28 +61,17 @@ func Router(routes []Route) Middleware {
 		case string:
 			pattern := t
 
-			// get all of the variable names
-			vars := varRegex.FindAllString(pattern, -1)
-			for j, val := range vars {
-				vars[j] = val[1:]
-			}
+			// turn sinatra-style routing into a named submatch
+			// for example: '/:root' => '/(?P<root>[^/?#])'
+			pattern = varRegex.ReplaceAllString(pattern, "(?P<$1>[^/?#]*)")
 
-			routes[i].vars = vars
-
-			// get rid of anything that could mess everything up
-			// since urls can have regex characters (like parens, dots, and *),
-			// make sure we don't get any weird regexes
-			pattern = regexp.QuoteMeta(pattern)
-
-			// replace all variables in the pattern with a regex to match a part of a URL
-			pattern = varRegex.ReplaceAllString(pattern, "(" + URLChars + "+)")
-
-			// allow optional parts of the string
-			pattern = strings.Replace(pattern, "\\?", "?", -1)
-
-			// store the generated regex into this Route object
+			// store the into this Route object
 			// go ahead and panic; all panics will occur during debugging anyway
 			routes[i].reg = regexp.MustCompile(pattern)
+
+			// grab the variable names from the regex
+			// only computed this once
+			routes[i].vars = routes[i].reg.SubexpNames()[1:]
 		case regexp.Regexp:
 			routes[i].reg = &t
 		default:
