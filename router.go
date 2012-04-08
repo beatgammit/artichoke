@@ -65,6 +65,11 @@ func Router(routes []Route) Middleware {
 			// for example: '/:root' => '/(?P<root>[^/?#])'
 			pattern = varRegex.ReplaceAllString(pattern, "(?P<$1>[^/?#]*)")
 
+			// tack on an ending anchor; user must account for it
+			if pattern[len(pattern)-1] != '$' {
+				pattern += "$"
+			}
+
 			// store the into this Route object
 			// go ahead and panic; all panics will occur during debugging anyway
 			routes[i].reg = regexp.MustCompile(pattern)
