@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 type Body struct {
@@ -37,9 +38,10 @@ func BodyParser(maxMemory int64) Middleware {
 			return false
 		}
 
-		switch r.Header.Get("Content-Type") {
+		s := r.Header.Get("Content-Type")
+		switch {
 			// parse as JSON
-			case "application/json":
+			case strings.Contains(s, "application/json"):
 				s, err := ioutil.ReadAll(r.Body)
 				if err != nil {
 					fmt.Println("Error reading body: " + err.Error())
@@ -54,14 +56,14 @@ func BodyParser(maxMemory int64) Middleware {
 
 				d.raw["body"] = NewBody(body, s, err)
 
-			case "multipart/form-data":
+			case strings.Contains(s, "multipart/form-data"):
 				err := r.ParseMultipartForm(maxMemory)
 				if err != nil {
 					fmt.Println("Error parsing body as multi-part form: " + err.Error())
 				}
 				d.raw["body"] = NewBody("", nil, err)
 
-			case "application/x-www-form-encoded":
+			case strings.Contains(s, "application/x-www-form-encoded"):
 				err := r.ParseForm()
 				if err != nil {
 					fmt.Println("Error parsing body as form")
@@ -69,7 +71,7 @@ func BodyParser(maxMemory int64) Middleware {
 				d.raw["body"] = NewBody("", nil, err)
 
 			// treat as default handler
-			case "text/plain":
+			case strings.Contains(s, "text/plain"):
 				fallthrough
 			// last resort, just read the body and pass it
 			default:
