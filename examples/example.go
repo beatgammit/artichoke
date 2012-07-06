@@ -60,7 +60,7 @@ func main() {
 			artichoke.QueryParser(),
 			artichoke.BodyParser(1024 * 10),
 			logger,
-			artichoke.Router(genRoutes()),
+			artichoke.StaticRouter(genRoutes()...),
 			artichoke.Static("./public"),
 		)
 	server.Run("localhost", 3345)

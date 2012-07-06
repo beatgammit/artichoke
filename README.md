@@ -112,23 +112,38 @@ For example:
 
 **Router**
 
-Basic request router. Give it an array of routes and it will do the routing work for you.
+Basic request router. There are two ways to instantiate:
 
-    func Router(routes) Middleware
+*Static Routes*
 
-* routes- []Route; array of Route instances
+This is the simplest way to create a router, especially if the routes will never change:
 
-	type Route struct {
-		Method string
-		Pattern interface{}
-		Handler Middleware
-	}
+    func StaticRouter(...routes) Middleware
+
+*Dynamic Routes*
+
+To have a dynamic router, create a new `Router`:
+
+    func NewRouter(...Routes) Router
+
+These public functions will be useful:
+
+    func (r Router) Add(...Routes)
+    func (r Router) Middleware() Middleware
+
+*Router*
+
+    type Route struct {
+        Method string
+        Pattern interface{}
+        Handler Middleware
+    }
 
 * Method- GET, POST, etc. or * to handle all request types
 * Pattern- string or regexp.Regexp; if it's a string, it will be parsed Sinatra style
     * each :identifier maps to a position in the URL
-	* ? makes the previous character or group optional
-	* this gets parsed into a regexp.Regexp object
+    * ? makes the previous character or group optional
+    * this gets parsed into a regexp.Regexp object
 * Handler- implementation of Middleware to handle the routed response
     * if more than one pattern matches, they will be treated as individual middleware
 
@@ -171,7 +186,7 @@ It's pretty simple. Be creative! For example, to match file extensions for a fil
 
 Simple static file handler that always ends the response.
 
-	func Static(root) Middleware
+    func Static(root) Middleware
 
 * root- string; directory root from current directory
 
@@ -179,6 +194,6 @@ Simple static file handler that always ends the response.
 
 Uses the built-in url.URL.Query() and attaches a `GetQuery()` function to the Data map that returns a url.Values object (basically a map[string][]string).
 
-	func QueryParser() Middleware
+    func QueryParser() Middleware
 
 There are no parameters, because it's super simple.
