@@ -25,7 +25,7 @@ type Route struct {
 }
 
 // helper that takes user input and gives it meaning
-func prepRoute(r Route) {
+func prepRoute(r *Route) {
 	if r.Handler == nil {
 		panic("Every route must have a func that implements artichoke.Middleware")
 	}
@@ -55,8 +55,10 @@ func prepRoute(r Route) {
 		// grab the variable names from the regex
 		// only compute this once
 		r.vars = r.reg.SubexpNames()[1:]
+
 	case regexp.Regexp:
 		r.reg = &t
+
 	default:
 		if _, ok := r.Pattern.(*regexp.Regexp); ok {
 			panic("Pattern is not a string or a regexp!")
@@ -65,17 +67,17 @@ func prepRoute(r Route) {
 }
 
 type Router interface {
-	Add(...Route)
-	Remove(...Route)
+	Add(...*Route)
+	Remove(...*Route)
 	Middleware() Middleware
 }
 
 type router struct {
-	routes []Route
+	routes []*Route
 	sem chan bool
 }
 
-func NewRouter(routes ...Route) Router {
+func NewRouter(routes ...*Route) Router {
 	r := new(router)
 	r.Add(routes...)
 
@@ -84,7 +86,7 @@ func NewRouter(routes ...Route) Router {
 	return r
 }
 
-func (r *router) Add(routes ...Route) {
+func (r *router) Add(routes ...*Route) {
 	for _, r := range routes {
 		prepRoute(r)
 	}
@@ -92,14 +94,14 @@ func (r *router) Add(routes ...Route) {
 	r.routes = append(r.routes, routes...)
 }
 
-func (r *router) Remove(routes ...Route) {
-	var keep []Route
+func (r *router) Remove(routes ...*Route) {
+	var keep []*Route
 
 	// make sure nobody can mess with routes while we're modifying it
 	defer func() {
-		r.sem <- true
+    <-r.sem
 	}()
-	<-r.sem
+  r.sem <- true
 
 	for _, route := range routes {
 		keep = append(keep, route)
@@ -113,9 +115,9 @@ func (r *router) Middleware() Middleware {
 	return func(w http.ResponseWriter, req *http.Request, d *Data) bool {
 		// make sure nobody can modify the routes array while we're doing stuff
 		defer func () {
-			r.sem <- true
+      <-r.sem
 		}()
-		<-r.sem
+    r.sem <- true
 
 		for _, v := range r.routes {
 			// use Contains because v.Method could have comma-separated methods
@@ -170,7 +172,7 @@ func (d *Data) GetParams() *Params {
 	return nil
 }
 
-func StaticRouter(routes ...Route) Middleware {
+func StaticRouter(routes ...*Route) Middleware {
 	router := NewRouter(routes...)
 	return router.Middleware()
 }

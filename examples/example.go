@@ -13,9 +13,9 @@ func handler(w http.ResponseWriter, r *http.Request, m *artichoke.Data) bool {
 	return true;
 }
 
-func genRoutes() []artichoke.Route {
-	ret := []artichoke.Route{
-		artichoke.Route{
+func genRoutes() []*artichoke.Route {
+	ret := []*artichoke.Route{
+		&artichoke.Route{
 			Method: "GET",
 			Pattern: "/greet/:first/?:last?",
 			Handler: handler,
