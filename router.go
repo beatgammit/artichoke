@@ -55,10 +55,8 @@ func prepRoute(r *Route) {
 		// grab the variable names from the regex
 		// only compute this once
 		r.vars = r.reg.SubexpNames()[1:]
-
 	case regexp.Regexp:
 		r.reg = &t
-
 	default:
 		if _, ok := r.Pattern.(*regexp.Regexp); ok {
 			panic("Pattern is not a string or a regexp!")
@@ -99,9 +97,9 @@ func (r *router) Remove(routes ...*Route) {
 
 	// make sure nobody can mess with routes while we're modifying it
 	defer func() {
-    <-r.sem
+		<-r.sem
 	}()
-  r.sem <- true
+	r.sem <- true
 
 	for _, route := range routes {
 		keep = append(keep, route)
@@ -112,12 +110,12 @@ func (r *router) Remove(routes ...*Route) {
 
 // returns a closure with access to the router
 func (r *router) Middleware() Middleware {
-	return func(w http.ResponseWriter, req *http.Request, d *Data) bool {
+	return func(w http.ResponseWriter, req *http.Request, d Data) bool {
 		// make sure nobody can modify the routes array while we're doing stuff
 		defer func () {
-      <-r.sem
+			<-r.sem
 		}()
-    r.sem <- true
+		r.sem <- true
 
 		for _, v := range r.routes {
 			// use Contains because v.Method could have comma-separated methods
@@ -141,7 +139,7 @@ func (r *router) Middleware() Middleware {
 				}
 			}
 
-			d.raw["params"] = NewParams(params)
+			d.Set("params", NewParams(params))
 			if res := v.Handler(w, req, d); res {
 				return true
 			}
@@ -165,8 +163,8 @@ func (p *Params) Get(key string) string {
 	return p.raw[key]
 }
 
-func (d *Data) GetParams() *Params {
-	if p, ok := d.raw["params"]; ok {
+func GetParams(d Data) *Params {
+	if p, ok := d.Get("params"); ok {
 		return p.(*Params)
 	}
 	return nil

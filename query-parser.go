@@ -5,8 +5,8 @@ import (
 	"net/url"
 )
 
-func (d *Data) GetQuery() (url.Values) {
-	if q, ok := d.raw["query"]; ok {
+func GetQuery(d Data) (url.Values) {
+	if q, ok := d.Get("query"); ok {
 		return q.(url.Values)
 	}
 
@@ -14,8 +14,8 @@ func (d *Data) GetQuery() (url.Values) {
 }
 
 func QueryParser() Middleware {
-	return func(w http.ResponseWriter, r *http.Request, m *Data) bool {
-		m.raw["query"] = r.URL.Query()
+	return func(w http.ResponseWriter, r *http.Request, m Data) bool {
+		m.Set("query", r.URL.Query())
 		return false
 	}
 }

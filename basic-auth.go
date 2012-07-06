@@ -36,8 +36,8 @@ func (e* AuthError) String() string {
 	return e.err
 }
 
-func (d* Data) GetAuth() *Auth {
-	if a, ok := d.raw["auth"]; ok {
+func GetAuth(d Data) *Auth {
+	if a, ok := d.Get("auth"); ok {
 		return a.(*Auth)
 	}
 
@@ -45,7 +45,7 @@ func (d* Data) GetAuth() *Auth {
 }
 
 func BasicAuth(auth map[string]string, required bool) Middleware {
-	return func (w http.ResponseWriter, r *http.Request, m *Data) bool {
+	return func (w http.ResponseWriter, r *http.Request, m Data) bool {
 		buf := bytes.Buffer{}
 		str := r.Header.Get("authorization")
 
@@ -75,7 +75,7 @@ func BasicAuth(auth map[string]string, required bool) Middleware {
 		pass := cAuth[1]
 
 		success := auth[user] == pass
-		m.raw["auth"] = NewAuth(user, pass, success)
+		m.Set("auth", NewAuth(user, pass, success))
 
 		if success {
 			if required {

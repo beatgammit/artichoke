@@ -66,7 +66,7 @@ Middleware
 
 This is what middleware looks like:
 
-    func(http.ResponseWriter, *http.Request, *Data) bool
+    func(http.ResponseWriter, *http.Request, Data) bool
 
 The last parameter is for arbitrary data passing. Middleware attach functions to this struct. Internally, there is a hidden `raw` property (`map[string]interface{}`) that middleware should attach their data to. Examine the packaged middleware for examples on style.
 

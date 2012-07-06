@@ -13,15 +13,29 @@ var errors = map[int]string{
 	http.StatusInternalServerError: fmt.Sprintf("<h1>Error %d: Internal Server Error</h1><br /><br />An internal server error prevented execution of this request. Please notify the webmaster.", http.StatusInternalServerError),
 }
 
-type Data struct {
+type Data interface {
+	Get(string) (interface{}, bool)
+	Set(string, interface{})
+}
+
+type data struct {
 	raw map[string]interface{}
+}
+
+func (d *data) Get(key string) (interface{}, bool) {
+  i, ok := d.raw[key]
+  return i, ok
+}
+
+func (d *data) Set(key string, val interface{}) {
+	d.raw[key] = val
 }
 
 // once a middleware returns true, no more middleware will be executed
 //
 // the last parameter is a general-purpose map passed to each middleware
 // middleware can use this to pass arbitrary data down the stack
-type Middleware func(http.ResponseWriter, *http.Request, *Data) bool
+type Middleware func(http.ResponseWriter, *http.Request, Data) bool
 
 type Server struct {
 	handler    func(http.ResponseWriter, *http.Request)
@@ -52,7 +66,7 @@ func (s *Server) Use(fns ...Middleware) {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	data := new(Data)
+	data := new(data)
 	data.raw = make(map[string]interface{})
 
 	for _, fn := range(s.middleware) {

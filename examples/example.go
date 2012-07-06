@@ -6,8 +6,8 @@ import (
 	"fmt"
 )
 
-func handler(w http.ResponseWriter, r *http.Request, m *artichoke.Data) bool {
-	params := m.GetParams()
+func handler(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
+	params := artichoke.GetParams(m)
 	w.Write([]byte("Hello " + params.Get("first") + " " + params.Get("last")));
 	w.Write([]byte(""))
 	return true;
@@ -25,12 +25,12 @@ func genRoutes() []*artichoke.Route {
 	return ret
 }
 
-func logger(w http.ResponseWriter, r *http.Request, m *artichoke.Data) bool {
+func logger(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
 	fmt.Println("Method:", r.Method)
 	fmt.Println("URL:", r.URL.Path)
 
 	// auth can  be nil if no authentication data was passed in
-	if auth := m.GetAuth(); auth != nil {
+	if auth := artichoke.GetAuth(m); auth != nil {
 		fmt.Println("User:", auth.User)
 		fmt.Println("Password:", auth.Pass)
 		fmt.Println("Authenticated:", auth.Authenticated)
@@ -39,13 +39,13 @@ func logger(w http.ResponseWriter, r *http.Request, m *artichoke.Data) bool {
 	}
 
 	fmt.Println("Query:")
-	for k, vals := range m.GetQuery() {
+	for k, vals := range artichoke.GetQuery(m) {
 		for _, v := range vals {
 			fmt.Println("  " + k + " : " + v)
 		}
 	}
 
-	if body := m.GetBody(); body != nil {
+	if body := artichoke.GetBody(m); body != nil {
 		fmt.Println("Body:")
 		fmt.Println("  " + string(body.Raw))
 	}
