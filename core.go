@@ -2,6 +2,7 @@ package artichoke
 
 import (
 	"fmt"
+	"crypto/tls"
 	"net"
 	"net/http"
 	"strconv"
@@ -84,14 +85,42 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(resp))
 }
 
-func (s *Server) Run(port int, host string) {
-	fmt.Println("Server starting on port:", port)
+func (s *Server) Run(host string, port int) {
+	addr := fmt.Sprintf("%s:%d", host, port)
+	l, e := net.Listen("tcp", addr)
+	if e != nil {
+		panic(e)
+	}
 
-	http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), s)
+	s.l = l
+	srv := &http.Server{Addr: addr, Handler: s}
+
+	fmt.Println("Server starting on port:", port)
+	srv.Serve(s.l)
 }
 
-func (s *Server) RunTLS(port int, host string, certFile string, keyFile string) {
-	fmt.Println("Secure server starting on port:", port)
+func (s *Server) RunTLS(host string, port int, certFile string, keyFile string) {
+	addr := fmt.Sprintf("%s:%d", host, port)
+	l, err := net.Listen("tcp", addr)
+	if err != nil {
+		panic(err)
+	}
 
-	http.ListenAndServeTLS(fmt.Sprintf("%s:%d", host, port), certFile, keyFile, s)
+	config := &tls.Config{NextProtos: []string{"http/1.1"}}
+	config.Certificates = make([]tls.Certificate, 1)
+	config.Certificates[0], err = tls.LoadX509KeyPair(certFile, keyFile)
+
+	if err != nil {
+		panic(err)
+	}
+
+	s.l = l
+	srv := &http.Server{Addr: addr, Handler: s, TLSConfig: config}
+
+	fmt.Println("Secure server starting on port:", port)
+	srv.Serve(s.l)
+}
+
+func (s *Server) Stop() {
+	s.l.Close()
 }

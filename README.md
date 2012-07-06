@@ -45,17 +45,17 @@ All Middleware will be passed to Use.
 
 Add middleware. Middleware will be called in the order received. For more information, please see the middleware section below.
 
-> func Run(port, host)
+> func Run(host, port)
 
-* port- int
 * host- string
+* port- int
 
 Runs the server on the specified port and host.
 
-> func RunTLS(port, host, certFile, keyFile)
+> func RunTLS(host, port, certFile, keyFile)
 
-* port- int
 * host- string
+* port- int
 * certFile- string; path to TLS certificate
 * keyFile- string; path to private key
 
