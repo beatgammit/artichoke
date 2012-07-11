@@ -77,9 +77,8 @@ type router struct {
 
 func NewRouter(routes ...*Route) Router {
 	r := new(router)
-	r.Add(routes...)
-
 	r.sem = make(chan bool, 1)
+	r.Add(routes...)
 
 	return r
 }
@@ -88,6 +87,12 @@ func (r *router) Add(routes ...*Route) {
 	for _, r := range routes {
 		prepRoute(r)
 	}
+
+	// make sure nobody can mess with routes while we're modifying it
+	defer func() {
+		<-r.sem
+	}()
+	r.sem <- true
 
 	r.routes = append(r.routes, routes...)
 }
@@ -111,12 +116,6 @@ func (r *router) Remove(routes ...*Route) {
 // returns a closure with access to the router
 func (r *router) Middleware() Middleware {
 	return func(w http.ResponseWriter, req *http.Request, d Data) bool {
-		// make sure nobody can modify the routes array while we're doing stuff
-		defer func () {
-			<-r.sem
-		}()
-		r.sem <- true
-
 		for _, v := range r.routes {
 			// use Contains because v.Method could have comma-separated methods
 			if !strings.Contains(v.Method, req.Method) && v.Method != "*" {

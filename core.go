@@ -23,8 +23,8 @@ type data struct {
 }
 
 func (d *data) Get(key string) (interface{}, bool) {
-  i, ok := d.raw[key]
-  return i, ok
+	i, ok := d.raw[key]
+	return i, ok
 }
 
 func (d *data) Set(key string, val interface{}) {
