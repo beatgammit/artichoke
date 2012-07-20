@@ -184,7 +184,7 @@ It's pretty simple. Be creative! For example, to match file extensions for a fil
 
 **Static**
 
-Simple static file handler that always ends the response.
+Simple static file handler that ends the response only if the file exists, or there is an error reading the file. This means that it is possible for subsequent Middleware to get called after Static.
 
     func Static(root) Middleware
 
