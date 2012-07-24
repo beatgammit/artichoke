@@ -52,16 +52,19 @@ func prepRoute(r *Route) {
 		// go ahead and panic; all panics will occur during debugging anyway
 		r.reg = regexp.MustCompile(pattern)
 
-		// grab the variable names from the regex
-		// only compute this once
-		r.vars = r.reg.SubexpNames()[1:]
 	case regexp.Regexp:
 		r.reg = &t
+
+	case *regexp.Regexp:
+		r.reg = t
+
 	default:
-		if _, ok := r.Pattern.(*regexp.Regexp); ok {
-			panic("Pattern is not a string or a regexp!")
-		}
+		panic("Pattern is not a string or a regexp!")
 	}
+
+	// grab the variable names from the regex
+	// only compute this once
+	r.vars = r.reg.SubexpNames()[1:]
 }
 
 type Router interface {
