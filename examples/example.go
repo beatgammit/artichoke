@@ -1,22 +1,23 @@
 package main
 
 import (
-	"../"
-	"net/http"
 	"fmt"
+	"github.com/beatgammit/artichoke"
+	"github.com/beatgammit/artichoke/middleware"
+	"net/http"
 )
 
 func handler(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
 	params := artichoke.GetParams(m)
-	w.Write([]byte("Hello " + params.Get("first") + " " + params.Get("last")));
+	w.Write([]byte("Hello " + params.Get("first") + " " + params.Get("last")))
 	w.Write([]byte(""))
-	return true;
+	return true
 }
 
-func genRoutes() []*artichoke.Route {
-	ret := []*artichoke.Route{
-		&artichoke.Route{
-			Method: "GET",
+func genRoutes() []*middleware.Route {
+	ret := []*middleware.Route{
+		&middleware.Route{
+			Method:  "GET",
 			Pattern: "/greet/:first/?:last?",
 			Handler: handler,
 		},
@@ -56,12 +57,12 @@ func logger(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
 
 func main() {
 	server := artichoke.New(nil,
-			artichoke.BasicAuth(map[string]string{"jack": "johnson"}, false),
-			artichoke.QueryParser(),
-			artichoke.BodyParser(1024 * 10),
-			logger,
-			artichoke.StaticRouter(genRoutes()...),
-			artichoke.Static("./public"),
-		)
+		middleware.BasicAuth(map[string]string{"jack": "johnson"}, false),
+		middleware.QueryParser(),
+		middleware.BodyParser(1024*10),
+		logger,
+		middleware.StaticRouter(genRoutes()...),
+		middleware.Static("./public"),
+	)
 	server.Run("localhost", 3345)
 }

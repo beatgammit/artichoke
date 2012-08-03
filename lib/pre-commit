@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+diff=$(git diff --cached --name-status | grep ".go" | awk '$1 == "A" || $1 == "M" { print $2 }')
+
+# make sure we have something
+if [ -n "${diff}" ]
+then
+  gofmt -w $diff
+  git add ${diff}
+fi

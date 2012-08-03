@@ -1,8 +1,9 @@
-package artichoke
+package middleware
 
 import (
-	"regexp"
+	"github.com/beatgammit/artichoke"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -15,7 +16,7 @@ type Route struct {
 	Method string
 	// passed by the client as a string or regexp, but always a regexp when used
 	Pattern interface{}
-	Handler Middleware
+	Handler artichoke.Middleware
 	// variable names by position in regexp match
 	// this will be not be nil only if Pattern has at least one variable
 	vars []string
@@ -70,12 +71,12 @@ func prepRoute(r *Route) {
 type Router interface {
 	Add(...*Route)
 	Remove(...*Route)
-	Middleware() Middleware
+	Middleware() artichoke.Middleware
 }
 
 type router struct {
 	routes []*Route
-	sem chan bool
+	sem    chan bool
 }
 
 func NewRouter(routes ...*Route) Router {
@@ -117,8 +118,8 @@ func (r *router) Remove(routes ...*Route) {
 }
 
 // returns a closure with access to the router
-func (r *router) Middleware() Middleware {
-	return func(w http.ResponseWriter, req *http.Request, d Data) bool {
+func (r *router) Middleware() artichoke.Middleware {
+	return func(w http.ResponseWriter, req *http.Request, d artichoke.Data) bool {
 		for _, v := range r.routes {
 			// use Contains because v.Method could have comma-separated methods
 			if !strings.Contains(v.Method, req.Method) && v.Method != "*" {
@@ -165,14 +166,14 @@ func (p *Params) Get(key string) string {
 	return p.raw[key]
 }
 
-func GetParams(d Data) *Params {
+func GetParams(d artichoke.Data) *Params {
 	if p, ok := d.Get("params"); ok {
 		return p.(*Params)
 	}
 	return nil
 }
 
-func StaticRouter(routes ...*Route) Middleware {
+func StaticRouter(routes ...*Route) artichoke.Middleware {
 	router := NewRouter(routes...)
 	return router.Middleware()
 }

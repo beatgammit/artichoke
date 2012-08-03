@@ -1,15 +1,16 @@
-package artichoke
+package middleware
 
 import (
-	"net/http"
-	"encoding/base64"
 	"bytes"
+	"encoding/base64"
+	"github.com/beatgammit/artichoke"
+	"net/http"
 	"strings"
 )
 
 type Auth struct {
-	User string
-	Pass string
+	User          string
+	Pass          string
 	Authenticated bool
 }
 
@@ -32,11 +33,11 @@ func NewError(msg string) *AuthError {
 	return e
 }
 
-func (e* AuthError) String() string {
+func (e *AuthError) String() string {
 	return e.err
 }
 
-func GetAuth(d Data) *Auth {
+func GetAuth(d artichoke.Data) *Auth {
 	if a, ok := d.Get("auth"); ok {
 		return a.(*Auth)
 	}
@@ -44,8 +45,8 @@ func GetAuth(d Data) *Auth {
 	return nil
 }
 
-func BasicAuth(auth map[string]string, required bool) Middleware {
-	return func (w http.ResponseWriter, r *http.Request, m Data) bool {
+func BasicAuth(auth map[string]string, required bool) artichoke.Middleware {
+	return func(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
 		buf := bytes.Buffer{}
 		str := r.Header.Get("authorization")
 
@@ -62,8 +63,8 @@ func BasicAuth(auth map[string]string, required bool) Middleware {
 		// just get the auth part
 		str = strings.Split(str, " ")[1]
 
-		i := len(str) / 4 * 3 - strings.Count(str, "=")
-		outBuf := make([]byte, len(str) / 4 * 3)
+		i := len(str)/4*3 - strings.Count(str, "=")
+		outBuf := make([]byte, len(str)/4*3)
 
 		dec := base64.NewDecoder(base64.StdEncoding, &buf)
 		buf.WriteString(str)
