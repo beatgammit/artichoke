@@ -45,6 +45,14 @@ func GetAuth(d artichoke.Data) *Auth {
 	return nil
 }
 
+func Authenticated(d artichoke.Data) bool {
+	if auth := GetAuth(d); auth != nil {
+		return auth.Authenticated
+	}
+
+	return false
+}
+
 func BasicAuth(auth map[string]string, required bool) artichoke.Middleware {
 	return func(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
 		buf := bytes.Buffer{}
