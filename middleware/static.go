@@ -13,11 +13,13 @@ func Static(root string) artichoke.Middleware {
 
 		// if the path doesn't exist, continue down the stack
 		f, err := os.Open(fPath)
-		if err != nil && os.IsNotExist(err) {
-			return false
+		if err != nil {
+			if os.IsNotExist(err) {
+				return false
+			}
+		} else {
+			f.Close()
 		}
-
-		f.Close()
 
 		http.ServeFile(w, r, fPath)
 		return true
