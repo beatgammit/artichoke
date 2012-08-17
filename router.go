@@ -51,6 +51,9 @@ func prepRoute(r *Route) {
 		if pattern[len(pattern)-1] != '$' {
 			pattern += "$"
 		}
+		if pattern[0] != '^' {
+			pattern = "^" + pattern
+		}
 
 		// store the into this Route object
 		// go ahead and panic; all panics will occur during debugging anyway
