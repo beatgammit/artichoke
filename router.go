@@ -8,7 +8,7 @@ import (
 
 // :identifier
 // this is a full Unicode-compliant regex
-var varRegex = regexp.MustCompile(":([\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}][\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nd}]*)")
+var varRegex = regexp.MustCompile(":[\\p{L}][\\p{L}\\p{N}]*")
 
 type Route struct {
 	// GET, POST, PUT, etc.
@@ -41,7 +41,11 @@ func prepRoute(r *Route) {
 
 		// turn sinatra-style routing into a named submatch
 		// for example: '/:root' => '/(?P<root>[^/?#])'
-		pattern = varRegex.ReplaceAllString(pattern, "(?P<$1>[^/?#]*)")
+		pattern = varRegex.ReplaceAllStringFunc(pattern, func(match string) string {
+			// make something that looks like this: "(?P<match>[^/?#]*)"
+			// the first char is a colon, so leave it out
+			return "(?P<" + match[1:] + ">[^/?#]*)"
+		})
 
 		// tack on an ending anchor; user must account for it
 		if pattern[len(pattern)-1] != '$' {
