@@ -1,9 +1,8 @@
-package middleware
+package artichoke
 
 import (
 	"bytes"
 	"encoding/base64"
-	"github.com/beatgammit/artichoke"
 	"net/http"
 	"strings"
 )
@@ -37,7 +36,7 @@ func (e *AuthError) String() string {
 	return e.err
 }
 
-func GetAuth(d artichoke.Data) *Auth {
+func GetAuth(d Data) *Auth {
 	if a, ok := d.Get("auth"); ok {
 		return a.(*Auth)
 	}
@@ -45,7 +44,7 @@ func GetAuth(d artichoke.Data) *Auth {
 	return nil
 }
 
-func Authenticated(d artichoke.Data) bool {
+func Authenticated(d Data) bool {
 	if auth := GetAuth(d); auth != nil {
 		return auth.Authenticated
 	}
@@ -53,8 +52,8 @@ func Authenticated(d artichoke.Data) bool {
 	return false
 }
 
-func BasicAuth(auth map[string]string, required bool) artichoke.Middleware {
-	return func(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
+func BasicAuth(auth map[string]string, required bool) Middleware {
+	return func(w http.ResponseWriter, r *http.Request, m Data) bool {
 		buf := bytes.Buffer{}
 		str := r.Header.Get("authorization")
 

@@ -1,14 +1,13 @@
-package middleware
+package artichoke
 
 import (
-	"github.com/beatgammit/artichoke"
 	"net/http"
 	"os"
 	"path"
 )
 
-func Static(root string) artichoke.Middleware {
-	return func(w http.ResponseWriter, r *http.Request, d artichoke.Data) bool {
+func Static(root string) Middleware {
+	return func(w http.ResponseWriter, r *http.Request, d Data) bool {
 		fPath := path.Join(root, r.URL.Path)
 
 		// if the path doesn't exist, continue down the stack

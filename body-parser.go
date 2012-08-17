@@ -1,9 +1,8 @@
-package middleware
+package artichoke
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/beatgammit/artichoke"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -24,7 +23,7 @@ func NewBody(d interface{}, r []byte, e error) *Body {
 	return body
 }
 
-func GetBody(d artichoke.Data) *Body {
+func GetBody(d Data) *Body {
 	if b, ok := d.Get("body"); ok {
 		return b.(*Body)
 	}
@@ -32,8 +31,8 @@ func GetBody(d artichoke.Data) *Body {
 	return nil
 }
 
-func BodyParser(maxMemory int64) artichoke.Middleware {
-	return func(w http.ResponseWriter, r *http.Request, d artichoke.Data) bool {
+func BodyParser(maxMemory int64) Middleware {
+	return func(w http.ResponseWriter, r *http.Request, d Data) bool {
 		// ignore GET and HEAD requests, they don't have useful data
 		if r.Method != "PUT" && r.Method != "POST" {
 			return false
