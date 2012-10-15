@@ -13,16 +13,10 @@ func handler(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
 	return true
 }
 
-func genRoutes() []*artichoke.Route {
-	ret := []*artichoke.Route{
-		&artichoke.Route{
-			Method:  "GET",
-			Pattern: "/greet/:first/?:last?",
-			Handler: handler,
-		},
-	}
-
-	return ret
+func genRoutes() artichoke.Middleware {
+	r := artichoke.NewRouter()
+	r.Get("/greet/:first/?:last?", handler)
+	return r.Middleware()
 }
 
 func logger(w http.ResponseWriter, r *http.Request, m artichoke.Data) bool {
@@ -60,7 +54,7 @@ func main() {
 		artichoke.QueryParser(),
 		artichoke.BodyParser(1024*10),
 		logger,
-		artichoke.StaticRouter(genRoutes()...),
+		genRoutes(),
 		artichoke.Static("./public"),
 	)
 	server.Run("localhost", 3345)

@@ -78,6 +78,19 @@ type Router interface {
 	Add(...*Route)
 	Remove(...*Route)
 	Middleware() Middleware
+
+	// convenience for Add
+	AddRoute(method string, pattern interface{}, handler Middleware) *Route
+
+	// Convenience functions
+	Connect(pattern interface{}, handler Middleware) *Route
+	Delete(pattern interface{}, handler Middleware) *Route
+	Get(pattern interface{}, handler Middleware) *Route
+	Head(pattern interface{}, handler Middleware) *Route
+	Options(pattern interface{}, handler Middleware) *Route
+	Post(pattern interface{}, handler Middleware) *Route
+	Put(pattern interface{}, handler Middleware) *Route
+	Trace(pattern interface{}, handler Middleware) *Route
 }
 
 type router struct {
@@ -99,9 +112,7 @@ func (r *router) Add(routes ...*Route) {
 	}
 
 	// make sure nobody can mess with routes while we're modifying it
-	defer func() {
-		<-r.sem
-	}()
+	defer func() { <-r.sem }()
 	r.sem <- true
 
 	r.routes = append(r.routes, routes...)
@@ -111,9 +122,7 @@ func (r *router) Remove(routes ...*Route) {
 	var keep []*Route
 
 	// make sure nobody can mess with routes while we're modifying it
-	defer func() {
-		<-r.sem
-	}()
+	defer func() { <-r.sem }()
 	r.sem <- true
 
 	for _, route := range routes {
@@ -121,6 +130,44 @@ func (r *router) Remove(routes ...*Route) {
 	}
 
 	r.routes = keep
+}
+
+func (r *router) AddRoute(method string, pattern interface{}, handler Middleware) *Route {
+	route := &Route{Method: method, Pattern: pattern, Handler: handler}
+	r.Add(route)
+	return route
+}
+
+func (r *router) Connect(pattern interface{}, handler Middleware) *Route {
+	return r.AddRoute("CONNECT", pattern, handler)
+}
+
+func (r *router) Delete(pattern interface{}, handler Middleware) *Route {
+	return r.AddRoute("DELETE", pattern, handler)
+}
+
+func (r *router) Get(pattern interface{}, handler Middleware) *Route {
+	return r.AddRoute("GET", pattern, handler)
+}
+
+func (r *router) Head(pattern interface{}, handler Middleware) *Route {
+	return r.AddRoute("HEAD", pattern, handler)
+}
+
+func (r *router) Options(pattern interface{}, handler Middleware) *Route {
+	return r.AddRoute("OPTIONS", pattern, handler)
+}
+
+func (r *router) Post(pattern interface{}, handler Middleware) *Route {
+	return r.AddRoute("POST", pattern, handler)
+}
+
+func (r *router) Put(pattern interface{}, handler Middleware) *Route {
+	return r.AddRoute("PUT", pattern, handler)
+}
+
+func (r *router) Trace(pattern interface{}, handler Middleware) *Route {
+	return r.AddRoute("TRACE", pattern, handler)
 }
 
 // returns a closure with access to the router
