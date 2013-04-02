@@ -15,6 +15,7 @@ var errors = map[int]string{
 
 type Data interface {
 	Get(string) (interface{}, bool)
+	GetString(string) string
 	Set(string, interface{})
 }
 
@@ -25,6 +26,17 @@ type data struct {
 func (d *data) Get(key string) (interface{}, bool) {
 	i, ok := d.raw[key]
 	return i, ok
+}
+
+func (d *data) GetString(key string) string {
+	i, ok := d.raw[key]
+	if !ok {
+		return ""
+	}
+	if s, ok := i.(string); ok {
+		return s
+	}
+	return ""
 }
 
 func (d *data) Set(key string, val interface{}) {
