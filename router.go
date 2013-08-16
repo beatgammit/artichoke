@@ -47,6 +47,10 @@ func prepRoute(r *Route) {
 			return "(?P<" + match[1:] + ">[^/?#]*)"
 		})
 
+        if pattern[len(pattern)-1] != '/' && pattern[len(pattern)-1] != '?' {
+            pattern += "/?"
+        }
+
 		// tack on an ending anchor; user must account for it
 		if pattern[len(pattern)-1] != '$' {
 			pattern += "$"
