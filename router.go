@@ -92,6 +92,7 @@ type Router interface {
 	Get(pattern interface{}, handler Middleware) *Route
 	Head(pattern interface{}, handler Middleware) *Route
 	Options(pattern interface{}, handler Middleware) *Route
+	Patch(pattern interface{}, handler Middleware) *Route
 	Post(pattern interface{}, handler Middleware) *Route
 	Put(pattern interface{}, handler Middleware) *Route
 	Trace(pattern interface{}, handler Middleware) *Route
@@ -160,6 +161,10 @@ func (r *router) Head(pattern interface{}, handler Middleware) *Route {
 
 func (r *router) Options(pattern interface{}, handler Middleware) *Route {
 	return r.AddRoute("OPTIONS", pattern, handler)
+}
+
+func (r *router) Patch(pattern interface{}, handler Middleware) *Route {
+	return r.AddRoute("PATCH", pattern, handler)
 }
 
 func (r *router) Post(pattern interface{}, handler Middleware) *Route {
