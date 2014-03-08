@@ -1,8 +1,8 @@
 package artichoke
 
 import (
-	"fmt"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
 	"strconv"
@@ -54,8 +54,8 @@ type Server struct {
 	middleware []Middleware
 	l          net.Listener
 	// for TLS connections
-	certFile   string
-	keyFile   string
+	certFile string
+	keyFile  string
 }
 
 var server Server
@@ -81,7 +81,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	data := new(data)
 	data.raw = make(map[string]interface{})
 
-	for _, fn := range(s.middleware) {
+	for _, fn := range s.middleware {
 		if fn(w, r, data) == true {
 			return
 		}
