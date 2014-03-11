@@ -143,8 +143,9 @@ func (s *Server) RunTLS(host string, port int, certFile string, keyFile string) 
 	s.l = l
 	srv := &http.Server{Addr: addr, Handler: s, TLSConfig: config}
 
+	tlsListener := tls.NewListener(s.l, config)
 	fmt.Println("Secure server starting on port:", port)
-	srv.Serve(s.l)
+	srv.Serve(tlsListener)
 }
 
 func (s *Server) Stop() {
