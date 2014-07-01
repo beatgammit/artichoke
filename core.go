@@ -13,6 +13,10 @@ var errors = map[int]string{
 	http.StatusInternalServerError: fmt.Sprintf("<h1>Error %d: Internal Server Error</h1><br /><br />An internal server error prevented execution of this request. Please notify the webmaster.", http.StatusInternalServerError),
 }
 
+var (
+	sessions = make(map[*http.Request]Data)
+)
+
 type Data interface {
 	Get(string) (interface{}, bool)
 	GetString(string) string
@@ -47,7 +51,24 @@ func (d *data) Set(key string, val interface{}) {
 //
 // the last parameter is a general-purpose map passed to each middleware
 // middleware can use this to pass arbitrary data down the stack
-type Middleware func(http.ResponseWriter, *http.Request, Data) bool
+type Middleware func(http.ResponseWriter, *http.Request) bool
+
+func Get(r *http.Request, key string) (interface{}, bool) {
+	if m, ok := sessions[r]; ok {
+		return m.Get(key)
+	}
+	return nil, false
+}
+
+func Set(r *http.Request, key string, val interface{}) error {
+	if m, ok := sessions[r]; ok {
+		m.Set(key, val)
+		return nil
+	} else {
+		// TODO: predefined error
+		return fmt.Errorf("Session doesn't exist")
+	}
+}
 
 type Server struct {
 	handler    func(http.ResponseWriter, *http.Request)
@@ -78,11 +99,11 @@ func (s *Server) Use(fns ...Middleware) {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	data := new(data)
-	data.raw = make(map[string]interface{})
+	sessions[r] = &data{raw: make(map[string]interface{})}
+	defer delete(sessions, r)
 
 	for _, fn := range s.middleware {
-		if fn(w, r, data) == true {
+		if fn(w, r) == true {
 			return
 		}
 	}

@@ -23,8 +23,8 @@ func NewBody(d interface{}, r []byte, e error) *Body {
 	return body
 }
 
-func GetBody(d Data) *Body {
-	if b, ok := d.Get("body"); ok {
+func GetBody(r *http.Request) *Body {
+	if b, ok := Get(r, "body"); ok {
 		return b.(*Body)
 	}
 
@@ -32,7 +32,7 @@ func GetBody(d Data) *Body {
 }
 
 func BodyParser(maxMemory int64) Middleware {
-	return func(w http.ResponseWriter, r *http.Request, d Data) bool {
+	return func(w http.ResponseWriter, r *http.Request) bool {
 		// ignore GET and HEAD requests, they don't have useful data
 		if r.Method != "PUT" && r.Method != "POST" {
 			return false
@@ -54,21 +54,21 @@ func BodyParser(maxMemory int64) Middleware {
 				fmt.Println("Error parsing JSON: " + err.Error())
 			}
 
-			d.Set("body", NewBody(body, s, err))
+			Set(r, "body", NewBody(body, s, err))
 
 		case strings.Contains(s, "multipart/form-data"):
 			err := r.ParseMultipartForm(maxMemory)
 			if err != nil {
 				fmt.Println("Error parsing body as multi-part form: " + err.Error())
 			}
-			d.Set("body", NewBody("", nil, err))
+			Set(r, "body", NewBody("", nil, err))
 
 		case strings.Contains(s, "application/x-www-form-encoded"):
 			err := r.ParseForm()
 			if err != nil {
 				fmt.Println("Error parsing body as form")
 			}
-			d.Set("body", NewBody("", nil, err))
+			Set(r, "body", NewBody("", nil, err))
 
 		// treat as default handler
 		case strings.Contains(s, "text/plain"):
@@ -81,7 +81,7 @@ func BodyParser(maxMemory int64) Middleware {
 				return false
 			}
 
-			d.Set("body", NewBody(string(s), s, err))
+			Set(r, "body", NewBody(string(s), s, err))
 		}
 		return false
 	}

@@ -7,7 +7,7 @@ import (
 )
 
 func Static(root string) Middleware {
-	return func(w http.ResponseWriter, r *http.Request, d Data) bool {
+	return func(w http.ResponseWriter, r *http.Request) bool {
 		fPath := path.Join(root, r.URL.Path)
 
 		// if the path doesn't exist, continue down the stack

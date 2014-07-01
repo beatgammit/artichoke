@@ -181,7 +181,7 @@ func (r *router) Trace(pattern interface{}, handler Middleware) *Route {
 
 // returns a closure with access to the router
 func (r *router) Middleware() Middleware {
-	return func(w http.ResponseWriter, req *http.Request, d Data) bool {
+	return func(w http.ResponseWriter, req *http.Request) bool {
 		for _, v := range r.routes {
 			// use Contains because v.Method could have comma-separated methods
 			if !strings.Contains(v.Method, req.Method) && v.Method != "*" {
@@ -204,8 +204,8 @@ func (r *router) Middleware() Middleware {
 				}
 			}
 
-			d.Set("params", NewParams(params))
-			if res := v.Handler(w, req, d); res {
+			Set(req, "params", NewParams(params))
+			if res := v.Handler(w, req); res {
 				return true
 			}
 		}
@@ -228,8 +228,8 @@ func (p *Params) Get(key string) string {
 	return p.raw[key]
 }
 
-func GetParams(d Data) *Params {
-	if p, ok := d.Get("params"); ok {
+func GetParams(r *http.Request) *Params {
+	if p, ok := Get(r, "params"); ok {
 		return p.(*Params)
 	}
 	return nil
