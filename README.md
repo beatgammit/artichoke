@@ -19,6 +19,11 @@ The provided middleware are meant to be simple. They pass information down the s
 3. Router- handle special API calls (ends the response if route exists)
 4. Handle static files (always ends the response with appropriate error codes)
 
+Status
+======
+
+This is currently beta quality and the API is subject to change. The basics are in place, but it would be nice to avoid explicit calls to `Continue` and `Close`.
+
 API
 ===
 
