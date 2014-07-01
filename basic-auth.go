@@ -53,7 +53,7 @@ func Authenticated(r *http.Request) bool {
 }
 
 func BasicAuth(auth map[string]string, required bool) Middleware {
-	return func(w http.ResponseWriter, r *http.Request) bool {
+	return func(w http.ResponseWriter, r *http.Request) {
 		buf := bytes.Buffer{}
 		str := r.Header.Get("authorization")
 
@@ -62,9 +62,10 @@ func BasicAuth(auth map[string]string, required bool) Middleware {
 				w.WriteHeader(http.StatusUnauthorized)
 				w.Write([]byte("Authorization required"))
 				w.Write([]byte(""))
+			} else {
+				Continue(r)
 			}
-
-			return required
+			return
 		}
 
 		// just get the auth part
@@ -90,11 +91,9 @@ func BasicAuth(auth map[string]string, required bool) Middleware {
 				w.WriteHeader(http.StatusUnauthorized)
 				w.Write([]byte("Not authorized"))
 				w.Write([]byte(""))
+			} else {
+				Continue(r)
 			}
-
-			return required
 		}
-
-		return false
 	}
 }

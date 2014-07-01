@@ -32,10 +32,11 @@ func GetBody(r *http.Request) *Body {
 }
 
 func BodyParser(maxMemory int64) Middleware {
-	return func(w http.ResponseWriter, r *http.Request) bool {
+	return func(w http.ResponseWriter, r *http.Request) {
 		// ignore GET and HEAD requests, they don't have useful data
 		if r.Method != "PUT" && r.Method != "POST" {
-			return false
+			Continue(r)
+			return
 		}
 
 		s := r.Header.Get("Content-Type")
@@ -45,7 +46,8 @@ func BodyParser(maxMemory int64) Middleware {
 			s, err := ioutil.ReadAll(r.Body)
 			if err != nil {
 				fmt.Println("Error reading body: " + err.Error())
-				return false
+				Continue(r)
+				return
 			}
 
 			var body interface{}
@@ -78,11 +80,12 @@ func BodyParser(maxMemory int64) Middleware {
 			s, err := ioutil.ReadAll(r.Body)
 			if err != nil {
 				fmt.Println("Error reading body: " + err.Error())
-				return false
+				Continue(r)
+				return
 			}
 
 			Set(r, "body", NewBody(string(s), s, err))
 		}
-		return false
+		Continue(r)
 	}
 }

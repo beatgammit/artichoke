@@ -14,8 +14,8 @@ func GetQuery(r *http.Request) url.Values {
 }
 
 func QueryParser() Middleware {
-	return func(w http.ResponseWriter, r *http.Request) bool {
+	return func(w http.ResponseWriter, r *http.Request) {
 		Set(r, "query", r.URL.Query())
-		return false
+		Continue(r)
 	}
 }

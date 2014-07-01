@@ -5,8 +5,6 @@ Similar to Node's connect module, `artichoke` offers a layered approach to web a
 
 Everything is a node in a stack. Starting at the top of the stack (the first function passed in), each function is executed until one ends the response, and the rest of the functions are not executed. If the stack has been traversed and the response has not been ended, a default error handler will end it.
 
-**This project is currently being developed using the weekly builds of Go. This is to be considered highly unstable and the API may change drastically.**
-
 Philosophy
 ----------
 
@@ -20,8 +18,6 @@ The provided middleware are meant to be simple. They pass information down the s
 2. Parse body- best attempt to decode the body (turn JSON string into Go map)
 3. Router- handle special API calls (ends the response if route exists)
 4. Handle static files (always ends the response with appropriate error codes)
-
-The platform is not meant to be used as a framework by itself, but as a framework to build other frameworks.
 
 API
 ===
@@ -61,14 +57,24 @@ Runs the server on the specified port and host.
 
 Runs the server on the specified port and host using the certificate and private key for TLS sessions.
 
+> func Continue(r \*http.Request)
+
+Continue executing middleware.
+
+> func Close(r \*http.Request)
+
+Mark this request as closed. This is the default state, and only needs to be called if `Continue` has been called in error.
+
+> func Closed(r \*http.Request) bool
+
+Checks whether this request is marked as closed.
+
 Middleware
 ----------
 
-This is what middleware looks like:
+A middleware is just an `http.HandlerFunc`. If a function doesn't end the response, the middleware must call `artichoke.Continue`.
 
-    func(http.ResponseWriter, *http.Request, Data) bool
-
-The last parameter is for arbitrary data passing. Middleware attach functions to this struct. Internally, there is a hidden `raw` property (`map[string]interface{}`) that middleware should attach their data to. Examine the packaged middleware for examples on style.
+Data can be passed down the stack by calling `artichoke.Set` and retrieved via `artichoke.Get`.
 
 **BasicAuth**
 
@@ -79,7 +85,7 @@ Performs basic HTTP authentication.
 * auth- map[string]string; maps a username to a password
 * required- bool; if true, sends a 401 and ends the response
 
-*BasicAuth* will make a new key and attach a `GetAuth()` function to the Data parameter, which returns a struct with the following properties:
+*BasicAuth* - Authentication data can be retrieved via `artichoke.GetAuth()`, which returns a struct with the following properties:
 
 * `User`- string; user name provided
 * `Pass`- string; password provided
@@ -149,7 +155,7 @@ These public functions will be useful:
 
 *Notes on Pattern:*
 
-Router attaches a `GetParams()` function to the Data parameter, which returns a `Params` struct, which has a `Get(key string)` function that gets the value for a specified key, which is also a string.
+Parameters can be retrieved via `artichoke.GetParams()`, which returns a `Params` struct, which has a `Get(key string)` function that gets the value for a specified key, which is also a string.
 
 Examples:
 
@@ -192,7 +198,7 @@ Simple static file handler that ends the response only if the file exists, or th
 
 **QueryParser**
 
-Uses the built-in url.URL.Query() and attaches a `GetQuery()` function to the Data map that returns a url.Values object (basically a map[string][]string).
+Uses the built-in url.URL.Query(), and the result is available with `artichoke.GetQuery()`, which returns a url.Values object (basically a map[string][]string).
 
     func QueryParser() Middleware
 

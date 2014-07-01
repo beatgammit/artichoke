@@ -14,7 +14,7 @@ var errors = map[int]string{
 }
 
 var (
-	sessions = make(map[*http.Request]Data)
+	sessions = make(map[*http.Request]*data)
 )
 
 type Data interface {
@@ -24,7 +24,8 @@ type Data interface {
 }
 
 type data struct {
-	raw map[string]interface{}
+	raw  map[string]interface{}
+	next bool
 }
 
 func (d *data) Get(key string) (interface{}, bool) {
@@ -47,11 +48,27 @@ func (d *data) Set(key string, val interface{}) {
 	d.raw[key] = val
 }
 
-// once a middleware returns true, no more middleware will be executed
-//
-// the last parameter is a general-purpose map passed to each middleware
-// middleware can use this to pass arbitrary data down the stack
-type Middleware func(http.ResponseWriter, *http.Request) bool
+type Middleware func(http.ResponseWriter, *http.Request)
+
+// Continue down the stack.
+func Continue(r *http.Request) {
+	if s, ok := sessions[r]; ok {
+		s.next = true
+	}
+}
+
+// Explicitly mark this request as closed. This is the default if Continue is not called.
+func Close(r *http.Request) {
+	if s, ok := sessions[r]; ok {
+		s.next = false
+	}
+}
+
+// Check if a connection is closed. This returns true unless Continue has been called.
+func Closed(r *http.Request) bool {
+	s, ok := sessions[r]
+	return !ok || !s.next
+}
 
 func Get(r *http.Request, key string) (interface{}, bool) {
 	if m, ok := sessions[r]; ok {
@@ -99,13 +116,16 @@ func (s *Server) Use(fns ...Middleware) {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	sessions[r] = &data{raw: make(map[string]interface{})}
+	sess := &data{raw: make(map[string]interface{})}
+	sessions[r] = sess
 	defer delete(sessions, r)
 
 	for _, fn := range s.middleware {
-		if fn(w, r) == true {
+		fn(w, r)
+		if !sess.next {
 			return
 		}
+		sess.next = false
 	}
 
 	status := http.StatusNotFound
