@@ -152,8 +152,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(resp))
 }
 
-func (s *Server) Run(host string, port int) {
-	addr := fmt.Sprintf("%s:%d", host, port)
+func (s *Server) Run(addr string) {
 	l, e := net.Listen("tcp", addr)
 	if e != nil {
 		panic(e)
@@ -162,12 +161,11 @@ func (s *Server) Run(host string, port int) {
 	s.l = l
 	srv := &http.Server{Addr: addr, Handler: s}
 
-	fmt.Println("Server starting on port:", port)
+	fmt.Println("Server starting:", addr)
 	srv.Serve(s.l)
 }
 
-func (s *Server) RunTLS(host string, port int, certFile string, keyFile string) {
-	addr := fmt.Sprintf("%s:%d", host, port)
+func (s *Server) RunTLS(addr string, certFile string, keyFile string) {
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		panic(err)
@@ -185,7 +183,7 @@ func (s *Server) RunTLS(host string, port int, certFile string, keyFile string) 
 	srv := &http.Server{Addr: addr, Handler: s, TLSConfig: config}
 
 	tlsListener := tls.NewListener(s.l, config)
-	fmt.Println("Secure server starting on port:", port)
+	fmt.Println("Secure server starting:", addr)
 	srv.Serve(tlsListener)
 }
 
