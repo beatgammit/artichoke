@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 var errors = map[int]string{
@@ -50,6 +51,9 @@ func (d *data) Set(key string, val interface{}) {
 type Middleware func(http.ResponseWriter, *http.Request, Data) bool
 
 type Server struct {
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+
 	handler    func(http.ResponseWriter, *http.Request)
 	middleware []Middleware
 	l          net.Listener
@@ -111,6 +115,21 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(resp))
 }
 
+func (s *Server) createServer(addr string) *http.Server {
+	srv := &http.Server{Addr: addr, Handler: s}
+	if s.ReadTimeout > 0 {
+		srv.ReadTimeout = s.ReadTimeout
+	} else {
+		srv.ReadTimeout = time.Minute * 2
+	}
+	if s.WriteTimeout > 0 {
+		srv.WriteTimeout = s.WriteTimeout
+	} else {
+		srv.WriteTimeout = time.Minute * 2
+	}
+	return srv
+}
+
 func (s *Server) Run(host string, port int) {
 	addr := fmt.Sprintf("%s:%d", host, port)
 	l, e := net.Listen("tcp", addr)
@@ -119,10 +138,9 @@ func (s *Server) Run(host string, port int) {
 	}
 
 	s.l = l
-	srv := &http.Server{Addr: addr, Handler: s}
 
 	fmt.Println("Server starting on port:", port)
-	srv.Serve(s.l)
+	s.createServer(addr).Serve(s.l)
 }
 
 func (s *Server) RunTLS(host string, port int, certFile string, keyFile string) {
@@ -141,7 +159,8 @@ func (s *Server) RunTLS(host string, port int, certFile string, keyFile string) 
 	}
 
 	s.l = l
-	srv := &http.Server{Addr: addr, Handler: s, TLSConfig: config}
+	srv := s.createServer(addr)
+	srv.TLSConfig = config
 
 	tlsListener := tls.NewListener(s.l, config)
 	fmt.Println("Secure server starting on port:", port)
