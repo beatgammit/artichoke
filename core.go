@@ -180,6 +180,22 @@ func (s *Server) RunTLS(host string, port int, certFile string, keyFile string) 
 	srv.Serve(tlsListener)
 }
 
+func (s *Server) RunTLSConfig(host string, port int, config *tls.Config) {
+	addr := fmt.Sprintf("%s:%d", host, port)
+	l, err := net.Listen("tcp", addr)
+	if err != nil {
+		panic(err)
+	}
+
+	s.l = l
+	srv := s.createServer(addr)
+	srv.TLSConfig = config
+
+	tlsListener := tls.NewListener(s.l, config)
+	fmt.Println("Secure server starting on port:", port)
+	srv.Serve(tlsListener)
+}
+
 func (s *Server) Stop() {
 	s.l.Close()
 }
