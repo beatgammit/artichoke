@@ -66,6 +66,8 @@ func (d *data) Set(key string, val interface{}) {
 type Middleware func(http.ResponseWriter, *http.Request, Data) bool
 
 type Server struct {
+	sync.RWMutex
+
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
 
@@ -76,8 +78,6 @@ type Server struct {
 	certFile string
 	keyFile  string
 }
-
-var server Server
 
 // create a new server with the options provided
 // the first parameter specifies options to control behavior of the server
@@ -93,10 +93,16 @@ func New(options map[string]interface{}, fns ...Middleware) *Server {
 // fns is any number of functions that act as middleware
 // they will be called order on every request
 func (s *Server) Use(fns ...Middleware) {
+	s.Lock()
+	defer s.Unlock()
+
 	s.middleware = append(s.middleware, fns...)
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.RLock()
+	defer s.RUnlock()
+
 	data := new(data)
 	for _, fn := range s.middleware {
 		if fn(w, r, data) == true {
@@ -197,5 +203,8 @@ func (s *Server) RunTLSConfig(host string, port int, config *tls.Config) {
 }
 
 func (s *Server) Stop() {
+	s.Lock()
+	defer s.Unlock()
+
 	s.l.Close()
 }
