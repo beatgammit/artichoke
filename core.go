@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -21,15 +22,22 @@ type Data interface {
 }
 
 type data struct {
+	sync.RWMutex
 	raw map[string]interface{}
 }
 
 func (d *data) Get(key string) (interface{}, bool) {
+	d.RLock()
+	defer d.RUnlock()
+
 	i, ok := d.raw[key]
 	return i, ok
 }
 
 func (d *data) GetString(key string) string {
+	d.RLock()
+	defer d.RUnlock()
+
 	i, ok := d.raw[key]
 	if !ok {
 		return ""
@@ -41,6 +49,13 @@ func (d *data) GetString(key string) string {
 }
 
 func (d *data) Set(key string, val interface{}) {
+	d.Lock()
+	defer d.Unlock()
+
+	if d.raw == nil {
+		d.raw = make(map[string]interface{})
+	}
+
 	d.raw[key] = val
 }
 
@@ -83,8 +98,6 @@ func (s *Server) Use(fns ...Middleware) {
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	data := new(data)
-	data.raw = make(map[string]interface{})
-
 	for _, fn := range s.middleware {
 		if fn(w, r, data) == true {
 			return
