@@ -1,3 +1,8 @@
+Deprecation Notice
+==================
+
+I am no longer maintaining this and there are known bugs that won't be fixed. I recommend switching to [gin](https://github.com/gin-gonic/gin), as I've seen better stability and lower resource usage along with better structure..
+
 Intro
 =====
 
