@@ -138,13 +138,9 @@ func (s *Server) createServer(addr string) *http.Server {
 	srv := &http.Server{Addr: addr, Handler: s}
 	if s.ReadTimeout > 0 {
 		srv.ReadTimeout = s.ReadTimeout
-	} else {
-		srv.ReadTimeout = time.Minute * 2
 	}
 	if s.WriteTimeout > 0 {
 		srv.WriteTimeout = s.WriteTimeout
-	} else {
-		srv.WriteTimeout = time.Minute * 2
 	}
 	return srv
 }
